@@ -19,7 +19,34 @@ export function createGlobalLimiter(env = process.env) {
 }
 
 const securityMiddleware = (app) => {
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdn.tailwindcss.com",
+          "https://cdn.jsdelivr.net"
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdn.jsdelivr.net",
+          "https://fonts.googleapis.com"
+        ],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        fontSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "https:", "wss:", "ws:"],
+        frameSrc: ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
+        mediaSrc: ["'self'", "data:", "blob:", "https:"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'self'"]
+      }
+    }
+  }));
   app.use(cors());
   app.use(createGlobalLimiter());
 };

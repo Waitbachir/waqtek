@@ -52,7 +52,7 @@ app.use(compression({
 app.use(express.static(staticRoot, {
 	index: false,
 	extensions: ["html"],
-	maxAge: process.env.NODE_ENV === "production" ? "1d" : 0
+	maxAge: 0
 }));
 
 app.get("/api/debug", (_, res) => {

@@ -11,7 +11,7 @@ const displayUtils = window.WaitingDisplayUtils || {};
 const computeReconnectDelay = typeof displayUtils.computeWsReconnectDelay === "function"
   ? displayUtils.computeWsReconnectDelay
   : (attempt, baseMs = 1500, maxMs = 30000) => Math.min(maxMs, baseMs * Math.pow(2, Math.max(0, attempt)));
-const parseDisplayUiConfig = typeof displayUtils.parseDisplayUiConfig === "function"
+const resolveDisplayUiConfig = typeof displayUtils.parseDisplayUiConfig === "function"
   ? displayUtils.parseDisplayUiConfig
   : ({ storedUi = {} }) => ({
       customTitle: String(storedUi.customTitle || ""),
@@ -225,7 +225,7 @@ function loadSettings() {
     state.adVideoUrl = String(data.adVideoUrl || "").trim();
     state.ui = {
       ...state.ui,
-      ...parseDisplayUiConfig({ storedUi: data.ui || {} })
+      ...resolveDisplayUiConfig({ storedUi: data.ui || {} })
     };
   } catch (_) {
     console.warn("No display settings");
@@ -246,7 +246,7 @@ function loadSettingsFromUrl() {
 
   state.ui = {
     ...state.ui,
-    ...parseDisplayUiConfig({ search: window.location.search, storedUi: state.ui })
+    ...resolveDisplayUiConfig({ search: window.location.search, storedUi: state.ui })
   };
 }
 

@@ -24,10 +24,42 @@ const ENV_WS_URL = (typeof window !== 'undefined' && window.ENV && window.ENV.WS
     : null;
 const FALLBACK_API_BASE = `${DEFAULT_ORIGIN}/api`;
 const FALLBACK_WS_URL = DEFAULT_WS_ORIGIN;
+const IS_LOCALHOST = typeof window !== 'undefined'
+    && window.location
+    && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+function sanitizeApiBaseUrl(rawUrl) {
+    if (!rawUrl) return null;
+    try {
+        const parsed = new URL(rawUrl, DEFAULT_ORIGIN);
+        if (!IS_LOCALHOST && parsed.hostname === window.location.hostname && parsed.port === '5000') {
+            return `${window.location.origin}/api`;
+        }
+        return parsed.toString().replace(/\/+$/, '');
+    } catch (_) {
+        return null;
+    }
+}
+
+function sanitizeWsUrl(rawUrl) {
+    if (!rawUrl) return null;
+    try {
+        const parsed = new URL(rawUrl, DEFAULT_WS_ORIGIN);
+        if (!IS_LOCALHOST && parsed.hostname === window.location.hostname && parsed.port === '5000') {
+            return window.location.origin.replace(/^http/i, 'ws');
+        }
+        return parsed.toString().replace(/\/+$/, '');
+    } catch (_) {
+        return null;
+    }
+}
+
+const SAFE_API_BASE = sanitizeApiBaseUrl(ENV_API_BASE);
+const SAFE_WS_URL = sanitizeWsUrl(ENV_WS_URL);
 const CONFIG = {
     // API Configuration
     API: {
-        BASE_URL: ENV_API_BASE || FALLBACK_API_BASE,  // À changer en production
+        BASE_URL: SAFE_API_BASE || FALLBACK_API_BASE,
         TIMEOUT: 10000,
         ENDPOINTS: {
             // Auth
@@ -70,7 +102,7 @@ const CONFIG = {
 
     // WebSocket Configuration
     WEBSOCKET: {
-        URL: ENV_WS_URL || FALLBACK_WS_URL,  // À changer en production
+        URL: SAFE_WS_URL || FALLBACK_WS_URL,
         RECONNECT_INTERVAL: 3000,
         MAX_RECONNECT_ATTEMPTS: 5,
     },

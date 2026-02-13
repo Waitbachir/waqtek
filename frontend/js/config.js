@@ -7,21 +7,23 @@
  * À modifier selon votre environnement
  */
 
-const DEFAULT_HOST = (typeof window !== 'undefined' && window.location && window.location.hostname)
-    ? window.location.hostname
-    : 'localhost';
-const DEFAULT_PROTOCOL = (typeof window !== 'undefined' && window.location && window.location.protocol === 'https:')
-    ? 'https'
-    : 'http';
-const DEFAULT_WS_PROTOCOL = DEFAULT_PROTOCOL === 'https' ? 'wss' : 'ws';
+const IS_BROWSER_HTTP = typeof window !== 'undefined'
+    && window.location
+    && (window.location.protocol === 'http:' || window.location.protocol === 'https:');
+const DEFAULT_ORIGIN = IS_BROWSER_HTTP
+    ? window.location.origin
+    : 'http://localhost:5000';
+const DEFAULT_WS_ORIGIN = IS_BROWSER_HTTP
+    ? window.location.origin.replace(/^http/i, 'ws')
+    : 'ws://localhost:5000';
 const ENV_API_BASE = (typeof window !== 'undefined' && window.ENV && window.ENV.API_BASE_URL)
     ? window.ENV.API_BASE_URL
     : null;
 const ENV_WS_URL = (typeof window !== 'undefined' && window.ENV && window.ENV.WS_URL)
     ? window.ENV.WS_URL
     : null;
-const FALLBACK_API_BASE = `${DEFAULT_PROTOCOL}://${DEFAULT_HOST}:5000/api`;
-const FALLBACK_WS_URL = `${DEFAULT_WS_PROTOCOL}://${DEFAULT_HOST}:5000`;
+const FALLBACK_API_BASE = `${DEFAULT_ORIGIN}/api`;
+const FALLBACK_WS_URL = DEFAULT_WS_ORIGIN;
 const CONFIG = {
     // API Configuration
     API: {

@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration Affichage TV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-6">
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-3xl w-full shadow-xl">
+    <h1 class="text-3xl font-bold mb-2">Affichage Salle d'attente</h1>
+    <p class="text-slate-400 mb-6">Scannez ce QR code avec un smartphone pour choisir l'établissement et la file à afficher sur cet écran.</p>
+    <div class="flex flex-col md:flex-row items-center gap-8">
+      <canvas id="qrSetup" class="bg-white rounded p-2"></canvas>
+      <div class="space-y-3 text-sm text-slate-300">
+        <p><span class="font-semibold">1.</span> Ouvrez l'appareil photo ou un lecteur QR sur le smartphone.</p>
+        <p><span class="font-semibold">2.</span> Scannez le QR pour ouvrir la page de contrôle.</p>
+        <p><span class="font-semibold">3.</span> Choisissez l'établissement et la file, puis affichez le QR final sur le téléphone.</p>
+        <p><span class="font-semibold">4.</span> Scannez ce QR final avec la TV (ou ouvrez l'URL) pour lancer l'affichage.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const controlUrl = new URL(window.location.href);
+    const basePath = controlUrl.pathname.replace(/display-setup\.html$/, '');
+    const phoneUrl = `${controlUrl.origin}${basePath}queue-display-control.html`;
+    new QRious({ element: document.getElementById('qrSetup'), size: 220, value: phoneUrl });
+  </script>
+
+<script src="./js/pages.js"></script>
+<script src="./js/components/dynamic-menu.js"></script>
+</body>
+</html>

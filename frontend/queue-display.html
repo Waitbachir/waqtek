@@ -1,0 +1,176 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affichage File d'attente</title>
+  <link rel="stylesheet" href="./css/display.css">
+  <link rel="stylesheet" href="./css/enterprise-menu.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+  <style>
+    :root {
+      --display-accent: #4f46e5;
+      --display-header-bg: rgba(15, 23, 42, 0.55);
+      --display-video-opacity: 1;
+    }
+    #displayHeader {
+      background: var(--display-header-bg) !important;
+      border-bottom: 1px solid color-mix(in srgb, var(--display-accent) 35%, transparent);
+    }
+    #settingsBtn,
+    #saveSettings {
+      background: var(--display-accent) !important;
+      color: #fff !important;
+    }
+    #adVideo,
+    #adIframe {
+      opacity: var(--display-video-opacity);
+    }
+    .call-popup-enter {
+      animation: callPopupIn 520ms cubic-bezier(0.2, 0.95, 0.2, 1) both;
+    }
+    .call-popup-out {
+      animation: callPopupOut 280ms ease-in both;
+    }
+    @keyframes callPopupIn {
+      from { opacity: 0; transform: scale(0.45); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes callPopupOut {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(-10px) scale(0.98); }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+  <header id="displayHeader" class="relative z-20 px-6 py-4 flex items-center justify-between bg-slate-900/55 backdrop-blur-md shadow">
+    <h1 id="establishmentTitle" class="pointer-events-none absolute left-1/2 -translate-x-1/2 text-3xl md:text-5xl font-extrabold tracking-wide text-white text-center"></h1>
+    <div class="flex items-center gap-3">
+      <img id="brandLogo" alt="Logo" class="hidden h-12 w-12 rounded-lg object-cover border border-white/20" />
+      <div>
+      <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Affichage en salle</p>
+      <h2 class="text-2xl font-bold">File d'attente</h2>
+      <p id="headerContext" class="text-sm text-slate-400">Sélectionnez un établissement et une file (ou toutes les files)</p>
+      <p id="connectionStatus" class="text-xs text-amber-300 mt-1 hidden">Connexion internet perdue. Mode hors-ligne actif, rapprochez-vous de l'etablissement.</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <button id="settingsBtn" class="px-3 py-2 rounded text-sm font-semibold">Paramètres</button>
+    </div>
+  </header>
+
+  <main id="displayMain" class="relative flex-1 overflow-hidden">
+    <div id="adFrame" class="absolute inset-0 z-0 bg-slate-950">
+      <video id="adVideo" class="w-full h-full object-cover" autoplay muted loop playsinline></video>
+      <iframe
+        id="adIframe"
+        class="w-full h-full object-cover hidden"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin"
+        title="Publicite video"
+      ></iframe>
+    </div>
+
+    <section id="queuesBottomStrip" class="absolute left-0 right-0 bottom-0 z-10 px-4 pb-4">
+      <div id="calledBoard" class="grid grid-cols-1 gap-2"></div>
+    </section>
+  </main>
+
+  <div id="settingsPanel" class="fixed inset-0 z-[70] bg-black/60 hidden items-center justify-center">
+    <div class="bg-white text-slate-900 rounded-xl shadow-xl w-full max-w-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold">Paramètres d'affichage</h3>
+        <button id="closeSettings" class="text-slate-500 hover:text-slate-800">✕</button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Établissement</label>
+          <select id="estSelect" class="w-full border rounded px-3 py-2">
+            <option value="">Sélectionner...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">File d'attente (ou toutes les files)</label>
+          <select id="queueSelect" class="w-full border rounded px-3 py-2" disabled>
+            <option value="">Sélectionner...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Vidéos enregistrées</label>
+          <select id="savedVideoSelect" class="w-full border rounded px-3 py-2" disabled>
+            <option value="">Sélectionner...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Nom du lien</label>
+          <input
+            id="adVideoNameInput"
+            type="text"
+            placeholder="Ex: Promo matin"
+            class="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Lien vidéo publicité</label>
+          <input
+            id="adVideoUrlInput"
+            type="url"
+            placeholder="https://www.youtube.com/watch?v=... ou https://.../video.mp4"
+            class="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <hr class="my-2 border-slate-200" />
+        <div>
+          <label class="block text-sm font-medium mb-1">Titre personnalisé</label>
+          <input id="uiTitleInput" type="text" class="w-full border rounded px-3 py-2" placeholder="Ex: Accueil VIP" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Couleur accent</label>
+          <input id="uiAccentInput" type="color" class="w-full border rounded px-3 py-2 h-11" value="#4f46e5" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Fond en-tête (CSS)</label>
+          <input id="uiHeaderBgInput" type="text" class="w-full border rounded px-3 py-2" value="rgba(15,23,42,0.55)" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">URL logo</label>
+          <input id="uiLogoInput" type="url" class="w-full border rounded px-3 py-2" placeholder="https://..." />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Opacité vidéo (0.2 à 1)</label>
+          <input id="uiVideoOpacityInput" type="number" min="0.2" max="1" step="0.1" class="w-full border rounded px-3 py-2" value="1" />
+        </div>
+        <label class="flex items-center gap-2">
+          <input id="uiHideSettingsInput" type="checkbox" class="h-4 w-4" />
+          <span class="text-sm">Masquer le bouton paramètres</span>
+        </label>
+        <div class="flex justify-end gap-3 pt-2">
+          <button id="saveSettings" class="px-4 py-2 rounded text-white font-semibold">Appliquer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="callPopupLayer" class="pointer-events-none fixed inset-0 z-50 hidden items-center justify-center px-4"></div>
+
+  <script src="./js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/core/StateManager.js"></script>
+  <script src="./js/core/ApiClient.js"></script>
+  <script src="./js/core/WebSocketClient.js"></script>
+  <script src="./js/core/lazy-loader.js"></script>
+  <script src="./js/services/AuthService.js"></script>
+  <script src="./js/services/EstablishmentService.js"></script>
+  <script src="./js/services/QueueService.js"></script>
+  <script src="./js/services/TicketService.js"></script>
+  <script src="./js/services/RealtimeService.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/pages/display/waiting-display.utils.js"></script>
+  <script src="./js/pages/display/waiting-display.js"></script>
+
+<script src="./js/enterprise-pages.js"></script>
+<script src="./js/components/enterprise-menu.js"></script>
+</body>
+</html>

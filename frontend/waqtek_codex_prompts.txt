@@ -1,0 +1,242 @@
+AGIS COMME UN INGENIEUR IOT ET SECURITE BACKEND EXPERT NODE.JS.
+
+OBJECTIF :
+Sécuriser totalement l’intégration ESP32 + accepteur de pièces.
+
+A FAIRE :
+
+1) Créer un modèle Device :
+   - device_id (unique)
+   - secret_key (unique, généré serveur)
+   - establishment_id
+   - status (ACTIVE / DISABLED)
+   - last_seen
+
+2) Implémenter signature HMAC SHA256 :
+   - Chaque requête ESP32 doit inclure :
+       headers:
+       x-device-id
+       x-signature
+   - Signature = HMAC(secret_key, body)
+
+3) Créer middleware verifyDeviceSignature :
+   - Vérifie device existant
+   - Vérifie status ACTIVE
+   - Vérifie signature
+   - Refuse requête si invalide
+
+4) Ajouter endpoint d’activation :
+   POST /iot/register
+   Génère device_id + secret_key
+
+GENERE :
+- Fichiers créés
+- Middleware
+- Modifications routes
+- Snippet ESP32 C++ pour signer requête
+- Tests associés
+- Documentation courte
+
+
+
+AGIS COMME ARCHITECTE BACKEND SAAS.
+
+OBJECTIF :
+Empêcher double paiement et incohérence serveur.
+
+A FAIRE :
+
+1) Créer modèle Transaction :
+   - transaction_id (UUID)
+   - device_id
+   - establishment_id
+   - amount
+   - status (PENDING, CONFIRMED, FAILED)
+   - ticket_id
+   - created_at
+
+2) Workflow :
+   - ESP32 envoie paiement
+   - Créer transaction PENDING
+   - Vérifier validité
+   - Générer ticket
+   - Passer transaction en CONFIRMED
+
+3) Empêcher double traitement :
+   - Vérifier transaction_id unique
+   - Si déjà traitée → ignorer
+
+4) Ajouter retry automatique en cas d’erreur serveur
+
+GENERE :
+- Service transactionnel
+- Mise à jour esp32.service.js
+- Tests unitaires
+- Gestion d’erreur propre
+
+AGIS COMME EXPERT MULTI-TENANT SAAS.
+
+OBJECTIF :
+Aucune fuite de données entre établissements.
+
+A FAIRE :
+
+1) Créer middleware validateTenant :
+   - Vérifie establishment_id depuis JWT
+   - Applique filtre automatique sur requêtes DB
+
+2) Modifier tous les controllers :
+   - Ajouter filtre establishment_id obligatoire
+
+3) Ajouter tests :
+   - Un utilisateur A ne peut pas lire données B
+
+GENERE :
+- Middleware complet
+- Patch controllers
+- Tests multi-tenant
+
+
+
+AGIS COMME INGENIEUR PERFORMANCE NODE.JS.
+
+OBJECTIF :
+Optimiser performance avec Redis.
+
+A FAIRE :
+
+1) Intégrer Redis
+2) Mettre en cache :
+   - stats journalières
+   - queues actives
+3) TTL = 5 min
+4) Invalidation cache lors modification ticket
+
+GENERE :
+- Configuration Redis
+- Middleware cache
+- Modifications endpoints
+- Tests performance
+
+
+
+AGIS COMME INGENIEUR SECURITE.
+
+OBJECTIF :
+Sécuriser API pour production.
+
+A FAIRE :
+
+1) Ajouter Helmet
+2) Ajouter Rate Limit 100 req/min
+3) Ajouter validation Joi/Zod
+4) Supprimer console.log → Winston logger
+5) Ajouter gestion erreur globale
+
+GENERE :
+- Code complet
+- Fichiers modifiés
+- Tests sécurité
+
+
+
+AGIS COMME DEVELOPPEUR FULLSTACK PRO.
+
+OBJECTIF :
+Créer dashboard revenus VIP professionnel.
+
+A FAIRE :
+
+1) Endpoints :
+   - /stats/revenue/daily
+   - /stats/revenue/monthly
+   - /stats/vip/count
+
+2) Frontend :
+   - Graphiques Chart.js
+   - Filtres date
+   - Affichage total encaissé
+
+GENERE :
+- Code backend
+- HTML/CSS/JS
+- Exemple JSON réponse
+
+
+
+AGIS COMME EXPERT WEB SMART TV.
+
+OBJECTIF :
+Rendre display stable 24/7.
+
+A FAIRE :
+
+1) Reconnexion auto WebSocket
+2) Heartbeat serveur
+3) Rechargement auto si erreur critique
+4) Version JS ultra légère
+5) Optimisation CSS GPU
+
+GENERE :
+- waiting-display.js refactorisé
+- gestion WS robuste
+- fallback offline
+
+
+
+AGIS COMME INGENIEUR DEVOPS.
+
+OBJECTIF :
+Monitoring professionnel.
+
+A FAIRE :
+
+1) Intégrer Winston
+2) Intégrer Sentry
+3) Log toutes erreurs critiques
+4) Ajouter endpoint /health
+5) Logger latence requêtes
+
+GENERE :
+- Configuration logger
+- Intégration Sentry
+- Middleware performance
+
+
+AGIS COMME INGENIEUR PERFORMANCE.
+
+OBJECTIF :
+Tester charge réelle.
+
+A FAIRE :
+
+1) Générer script k6 :
+   - 500 req/min
+   - 100 WebSocket
+2) Rapport attendu
+3) Indiquer seuil critique
+
+GENERE :
+- Script complet
+- Instructions execution
+- Métriques attendues
+
+
+
+AGIS COMME EXPERT UX/UI.
+
+OBJECTIF :
+Améliorer expérience client VIP.
+
+A FAIRE :
+
+1) Animation confirmation paiement
+2) Son distinct VIP
+3) Affichage temps estimé attente
+4) QR code suivi ticket
+5) Thème personnalisable établissement
+
+GENERE :
+- Code frontend
+- Styles
+- JS interaction

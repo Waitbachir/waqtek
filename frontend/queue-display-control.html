@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contrôle Affichage</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center p-6">
+  <div class="w-full max-w-3xl bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+    <h1 class="text-2xl font-bold mb-2">Contrôler l'affichage TV</h1>
+    <p class="text-slate-400 mb-6">Sélectionnez l'établissement et la file. Un QR sera généré pour l'écran TV.</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-sm font-semibold mb-1">Établissement</label>
+        <select id="estSelect" class="w-full rounded px-3 py-2 bg-slate-700 border border-slate-600"></select>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1">File d'attente</label>
+        <select id="queueSelect" class="w-full rounded px-3 py-2 bg-slate-700 border border-slate-600" disabled></select>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-6">
+      <canvas id="qrFinal" class="bg-white rounded p-2"></canvas>
+      <div class="text-sm text-slate-300 space-y-2">
+        <p>Scannez ce QR avec l'écran TV (ou ouvrez le lien) :</p>
+        <code id="finalUrl" class="block break-all bg-slate-700 px-3 py-2 rounded text-xs"></code>
+        <button id="copyBtn" class="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Copier l'URL</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/core/StateManager.js"></script>
+  <script src="./js/core/ApiClient.js"></script>
+  <script src="./js/core/WebSocketClient.js"></script>
+  <script src="./js/services/AuthService.js"></script>
+  <script src="./js/services/EstablishmentService.js"></script>
+  <script src="./js/services/QueueService.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/pages/display/display-control.js"></script>
+
+<script src="./js/pages.js"></script>
+<script src="./js/components/dynamic-menu.js"></script>
+</body>
+</html>

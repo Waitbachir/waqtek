@@ -1,0 +1,72 @@
+/* Shared responsive tweaks for all pages */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.table-scroll,
+.table-wrapper {
+  overflow-x: auto;
+}
+
+@media (max-width: 1024px) {
+  .app-shell {
+    flex-direction: column !important;
+    min-height: 100vh !important;
+  }
+
+  .app-sidebar {
+    width: 100% !important;
+  }
+
+  .app-sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .app-main {
+    padding: 16px !important;
+  }
+
+  .layout {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
+  .sidebar {
+    width: 100% !important;
+  }
+
+  .content,
+  .main,
+  .main-content {
+    padding: 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-sidebar nav a,
+  .app-sidebar nav button {
+    font-size: 0.85rem;
+    padding: 10px 12px;
+  }
+
+  .app-main h1,
+  .app-main h2,
+  .main h1,
+  .main h2,
+  .content h1,
+  .content h2 {
+    font-size: 1.5rem !important;
+  }
+}

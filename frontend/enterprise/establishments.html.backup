@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>WaQtek | Établissements</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+        }
+
+        .layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 240px;
+            background: #0f172a;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar a:hover {
+            background: #1e293b;
+            color: #fff;
+        }
+
+        /* ===== CONTENT ===== */
+        .content {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+        }
+
+        .btn:hover {
+            opacity: .9;
+        }
+
+        /* ===== FORM ===== */
+        .form-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,.08);
+        }
+
+        .form-box input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* ===== TABLE ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,.08);
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: left;
+        }
+
+        th {
+            background: #e2e8f0;
+        }
+
+        tr:not(:last-child) {
+            border-bottom: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+
+<script>
+if (!localStorage.getItem("waqtek_token")) {
+    window.location.href = "login.html";
+}
+</script>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <h2>WaQtek</h2>
+        <a href="dashboard.html">📊 Dashboard</a>
+        <a href="establishments.html">🏢 Établissements</a>
+        <a href="create-queue.html">📋 Files</a>
+        <a href="tickets.html">🎫 Tickets</a>
+        <a href="stats.html">📈 Statistiques</a>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <div class="header">
+            <h1>Établissements</h1>
+            <button class="btn btn-danger logout">Déconnexion</button>
+        </div>
+
+        <!-- CREATE -->
+        <div class="form-box">
+            <h3>Créer un établissement</h3>
+            <input type="text" id="estName" placeholder="Nom">
+            <input type="text" id="estAddress" placeholder="Adresse">
+            <input type="email" id="estEmail" placeholder="Email (optionnel)">
+            <input type="tel" id="estPhone" placeholder="Téléphone (optionnel)">
+            <textarea id="estDescription" placeholder="Description (optionnel)" style="width: 100%; padding: 10px; margin-bottom: 10px; min-height: 80px;"></textarea>
+            <button class="btn" id="createEstBtn">Créer</button>
+        </div>
+
+        <!-- TABLE -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Adresse</th>
+                    <th>Email</th>
+                    <th>Créé le</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="estTable">
+                <tr>
+                    <td colspan="5">Chargement...</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </main>
+</div>
+
+<!-- Core Scripts (Required Order) -->
+<script src="../js/config.js"></script>
+<script src="../js/core/StateManager.js"></script>
+<script src="../js/core/ApiClient.js"></script>
+<script src="../js/core/WebSocketClient.js"></script>
+<script src="../js/init.js"></script>
+
+<!-- Services -->
+<script src="../js/services/AuthService.js"></script>
+<script src="../js/services/EstablishmentService.js"></script>
+<script src="../js/services/QueueService.js"></script>
+<script src="../js/services/TicketService.js"></script>
+<script src="../js/services/StatsService.js"></script>
+<script src="../js/services/RealtimeService.js"></script>
+
+<!-- Utilities -->
+<script src="../js/utils.js"></script>
+
+<!-- Page-Specific Script -->
+<script src="../js/pages/enterprise/establishments.js"></script>
+
+</body>
+</html>

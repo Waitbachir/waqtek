@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>POS Ticket | WaQtek</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/enterprise-menu.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .box {
+            background: #fff;
+            max-width: 560px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .3);
+        }
+        h1 { color: #d40000; text-align: center; font-size: 34px; margin-bottom: 10px; }
+        p { text-align: center; color: #666; margin-bottom: 20px; font-size: 16px; }
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        select { background: #f9f9f9; color: #333; }
+        select:focus { outline: none; border-color: #667eea; background: #fff; }
+        button {
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-free { background: #2e7d32; }
+        .btn-free:hover { background: #1b5e20; transform: translateY(-2px); }
+        .btn-remote { background: #d40000; }
+        .btn-remote:hover { background: #b00000; transform: translateY(-2px); }
+        #ticketBox {
+            display: none;
+            margin-top: 22px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            border-radius: 8px;
+            text-align: center;
+        }
+        #ticketBox.show { display: block; }
+        #ticketNumber { font-size: 44px; color: #d40000; margin: 10px 0; font-weight: bold; }
+        #ticketMeta { color: #555; font-size: 14px; }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+        }
+        .modal.show { display: flex; }
+        .modal-card {
+            width: 100%;
+            max-width: 430px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, .26);
+        }
+        .modal-card h3 { color: #d40000; margin-bottom: 8px; }
+        .modal-card p { text-align: left; margin-bottom: 14px; }
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .btn-no { background: #616161; }
+        .btn-yes { background: #d40000; }
+        #syncBanner {
+            margin: 8px 0 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+        #syncBanner.online {
+            display: block;
+            background: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #a5d6a7;
+        }
+        #syncBanner.offline {
+            display: block;
+            background: #fff8e1;
+            color: #8d6e63;
+            border: 1px solid #ffe082;
+        }
+        #syncInfo {
+            margin-top: 10px;
+            text-align: center;
+            color: #555;
+            font-size: 13px;
+        }
+        @media (max-width: 640px) {
+            .box { padding: 22px; }
+            h1 { font-size: 28px; }
+            #ticketNumber { font-size: 34px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>WaQtek POS Ticket</h1>
+        <p>Choisissez l'etablissement et la file d'attente</p>
+        <div id="syncBanner"></div>
+
+        <select id="establishmentSelect">
+            <option value="">Selectionner un etablissement</option>
+        </select>
+
+        <select id="queueSelect" disabled>
+            <option value="">Selectionner une queue</option>
+        </select>
+
+        <button id="createFreeBtn" class="btn-free">Creer ticket local (PST)</button>
+        <button id="createRemoteBtn" class="btn-remote">Creer ticket avec acces distant</button>
+
+        <div id="ticketBox">
+            <p>Ticket cree</p>
+            <div id="ticketNumber">---</div>
+            <div id="ticketMeta"></div>
+        </div>
+        <div id="syncInfo"></div>
+    </div>
+
+    <div id="remoteConfirmModal" class="modal" aria-hidden="true">
+        <div class="modal-card">
+            <h3>Acces distant</h3>
+            <p>Voulez-vous activer l'acces distant pour ce ticket avec paiement de 50 DA ?</p>
+            <div class="modal-actions">
+                <button id="modalNoBtn" class="btn-no">Non (gratuit)</button>
+                <button id="modalYesBtn" class="btn-yes">Oui (50 DA)</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/core/StateManager.js"></script>
+    <script src="../js/core/ApiClient.js"></script>
+    <script src="../js/core/WebSocketClient.js"></script>
+    <script src="../js/init.js"></script>
+    <script src="../js/services/AuthService.js"></script>
+    <script src="../js/services/EstablishmentService.js"></script>
+    <script src="../js/services/QueueService.js"></script>
+    <script src="../js/services/TicketService.js"></script>
+    <script src="../js/services/StatsService.js"></script>
+    <script src="../js/services/RealtimeService.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/pages/client/pos-ticket.js"></script>
+
+<script src="../js/enterprise-pages.js"></script>
+<script src="../js/components/enterprise-menu.js"></script>
+</body>
+</html>

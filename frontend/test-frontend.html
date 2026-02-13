@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaQtek - Frontend Diagnostics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .check {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f9f9f9;
+            border-left: 4px solid #ddd;
+            border-radius: 4px;
+        }
+        .check.success {
+            border-left-color: #4caf50;
+            background: #f1f8f6;
+        }
+        .check.error {
+            border-left-color: #f44336;
+            background: #fdf5f5;
+        }
+        .check.warning {
+            border-left-color: #ff9800;
+            background: #fff8f5;
+        }
+        .check-icon {
+            font-size: 18px;
+            margin-right: 10px;
+            min-width: 30px;
+        }
+        .check-text {
+            flex: 1;
+        }
+        .error-detail {
+            font-family: monospace;
+            font-size: 12px;
+            background: #fafafa;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            color: #d32f2f;
+            overflow-x: auto;
+        }
+        .test-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .output {
+            background: #f0f0f0;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 WaQtek Frontend - Diagnostics</h1>
+        
+        <!-- Core Checks -->
+        <div class="section">
+            <h2>✓ Vérification des Scripts Core</h2>
+            <div id="core-checks"></div>
+        </div>
+
+        <!-- Services Checks -->
+        <div class="section">
+            <h2>✓ Vérification des Services</h2>
+            <div id="service-checks"></div>
+        </div>
+
+        <!-- Global Objects -->
+        <div class="section">
+            <h2>✓ Objets Globaux</h2>
+            <div id="global-checks"></div>
+        </div>
+
+        <!-- API Tests -->
+        <div class="section">
+            <h2>🧪 Tests API</h2>
+            <div class="test-area">
+                <button onclick="testApiConnection()">Tester Connexion API</button>
+                <button onclick="testLogin()">Tester Login</button>
+                <button onclick="testGetEstablishments()">Tester Get Establishments</button>
+                <button onclick="clearOutput()">Effacer Output</button>
+            </div>
+            <div id="test-output" class="output"></div>
+        </div>
+
+        <!-- Console Logs -->
+        <div class="section">
+            <h2>📋 Logs de la Console</h2>
+            <div id="console-logs" class="output"></div>
+        </div>
+    </div>
+
+    <!-- Core Scripts (Required Order) -->
+    <script src="js/config.js"></script>
+    <script src="js/core/StateManager.js"></script>
+    <script src="js/core/ApiClient.js"></script>
+    <script src="js/core/WebSocketClient.js"></script>
+
+    <!-- Services -->
+    <script src="js/services/AuthService.js"></script>
+    <script src="js/services/EstablishmentService.js"></script>
+    <script src="js/services/QueueService.js"></script>
+    <script src="js/services/TicketService.js"></script>
+    <script src="js/services/StatsService.js"></script>
+    <script src="js/services/RealtimeService.js"></script>
+
+    <!-- Utilities -->
+    <script src="js/utils.js"></script>
+
+    <script>
+        // Redirect console logs to the page
+        const consoleLogs = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            consoleLogs.push('✅ ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+            updateConsoleLogs();
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            consoleLogs.push('❌ ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+            updateConsoleLogs();
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            consoleLogs.push('⚠️ ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+            updateConsoleLogs();
+        };
+
+        function updateConsoleLogs() {
+            const logsDiv = document.getElementById('console-logs');
+            logsDiv.textContent = consoleLogs.slice(-50).join('\n');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // Run diagnostics after page load
+        window.addEventListener('load', function() {
+            runDiagnostics();
+        });
+
+        function runDiagnostics() {
+            console.log('🔍 Démarrage des diagnostics...');
+
+            // Check core objects
+            const coreChecks = [
+                { name: 'CONFIG', obj: typeof CONFIG !== 'undefined' },
+                { name: 'stateManager', obj: typeof stateManager !== 'undefined' },
+                { name: 'apiClient', obj: typeof apiClient !== 'undefined' },
+                { name: 'wsClient', obj: typeof wsClient !== 'undefined' },
+            ];
+
+            const coreDiv = document.getElementById('core-checks');
+            coreChecks.forEach(check => {
+                const elem = document.createElement('div');
+                elem.className = `check ${check.obj ? 'success' : 'error'}`;
+                elem.innerHTML = `
+                    <span class="check-icon">${check.obj ? '✅' : '❌'}</span>
+                    <span class="check-text"><strong>${check.name}</strong> ${check.obj ? 'Chargé' : 'Non chargé'}</span>
+                `;
+                coreDiv.appendChild(elem);
+            });
+
+            // Check services
+            const serviceChecks = [
+                { name: 'AuthService', obj: typeof AuthService !== 'undefined' },
+                { name: 'EstablishmentService', obj: typeof EstablishmentService !== 'undefined' },
+                { name: 'QueueService', obj: typeof QueueService !== 'undefined' },
+                { name: 'TicketService', obj: typeof TicketService !== 'undefined' },
+                { name: 'StatsService', obj: typeof StatsService !== 'undefined' },
+                { name: 'RealtimeService', obj: typeof RealtimeService !== 'undefined' },
+            ];
+
+            const serviceDiv = document.getElementById('service-checks');
+            serviceChecks.forEach(check => {
+                const elem = document.createElement('div');
+                elem.className = `check ${check.obj ? 'success' : 'error'}`;
+                elem.innerHTML = `
+                    <span class="check-icon">${check.obj ? '✅' : '❌'}</span>
+                    <span class="check-text"><strong>${check.name}</strong> ${check.obj ? 'Chargé' : 'Non chargé'}</span>
+                `;
+                serviceDiv.appendChild(elem);
+            });
+
+            // Check global objects
+            const globalChecks = [
+                { name: 'window.state', obj: typeof window.state !== 'undefined' },
+                { name: 'window.api', obj: typeof window.api !== 'undefined' },
+                { name: 'window.AuthService', obj: typeof window.AuthService !== 'undefined' },
+                { name: 'CONFIG.API.BASE_URL', obj: CONFIG?.API?.BASE_URL || 'Not set' },
+            ];
+
+            const globalDiv = document.getElementById('global-checks');
+            globalChecks.forEach(check => {
+                const elem = document.createElement('div');
+                elem.className = `check ${typeof check.obj === 'string' ? 'success' : (check.obj ? 'success' : 'error')}`;
+                elem.innerHTML = `
+                    <span class="check-icon">${check.obj ? '✅' : '❌'}</span>
+                    <span class="check-text"><strong>${check.name}</strong>: ${check.obj === true ? 'Disponible' : check.obj}</span>
+                `;
+                globalDiv.appendChild(elem);
+            });
+
+            console.log('✅ Diagnostics complétés!');
+        }
+
+        function addOutput(message) {
+            const output = document.getElementById('test-output');
+            const time = new Date().toLocaleTimeString();
+            output.textContent += `[${time}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('test-output').textContent = '';
+        }
+
+        async function testApiConnection() {
+            addOutput('🔍 Test de connexion API...');
+            try {
+                const response = await fetch(CONFIG.API.BASE_URL);
+                if (response.ok) {
+                    addOutput('✅ API accessible');
+                } else {
+                    addOutput(`⚠️ API répond avec le statut ${response.status}`);
+                }
+            } catch (error) {
+                addOutput(`❌ Erreur: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            addOutput('🔐 Test login...');
+            try {
+                const result = await AuthService.login('test@test.com', 'Test123!');
+                addOutput(`✅ Login réponse: ${JSON.stringify(result)}`);
+            } catch (error) {
+                addOutput(`❌ Erreur login: ${error.message}`);
+            }
+        }
+
+        async function testGetEstablishments() {
+            addOutput('🏢 Test Get Establishments...');
+            try {
+                const establishments = await EstablishmentService.getEstablishments();
+                addOutput(`✅ ${establishments.length} établissements chargés`);
+                if (establishments.length > 0) {
+                    addOutput(`   Premier: ${establishments[0].name}`);
+                }
+            } catch (error) {
+                addOutput(`❌ Erreur: ${error.message}`);
+            }
+        }
+    </script>
+
+<script src="./js/pages.js"></script>
+<script src="./js/components/dynamic-menu.js"></script>
+</body>
+</html>
+

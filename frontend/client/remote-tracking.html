@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Suivi Ticket Distant | WaQtek</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(160deg, #e8efff 0%, #f5f8ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+        }
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, .16);
+            text-align: center;
+        }
+        h1 { color: #1b4aa9; margin-bottom: 8px; }
+        .status {
+            margin-top: 12px;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .pending { background: #fff8e1; color: #8d6e63; border: 1px solid #ffe082; }
+        .ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+        .error { background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+        .position {
+            margin-top: 14px;
+            background: #eef4ff;
+            border: 1px solid #c7d7ff;
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .position .value {
+            font-size: 42px;
+            font-weight: 700;
+            color: #1b4aa9;
+            margin: 6px 0;
+        }
+        .hint { margin-top: 10px; color: #666; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Suivi de votre ticket</h1>
+        <p>Votre position est mise a jour automatiquement.</p>
+
+        <div id="status" class="status pending">Connexion au service...</div>
+
+        <div class="position">
+            <div>Numero ticket</div>
+            <div id="ticketNumberValue" class="value">-</div>
+            <div style="margin-bottom: 8px;">&nbsp;</div>
+            <div>Position actuelle</div>
+            <div id="positionValue" class="value">-</div>
+            <div>Tickets en attente: <strong id="waitingValue">-</strong></div>
+        </div>
+
+        <p class="hint">Ce lien est valable sur un seul smartphone et expire quand le ticket est appele.</p>
+    </div>
+    <script src="../js/pages/client/remote-track.js"></script>
+
+<script src="../js/pages.js"></script>
+<script src="../js/components/dynamic-menu.js"></script>
+</body>
+</html>

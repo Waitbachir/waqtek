@@ -1,0 +1,409 @@
+
+
+/*
+  ESP32 - WaQtek POS Receiver (COMPLET)
+  Endpoints:
+    GET  /                 -> UI test (bouton confirmation paiement)
+    GET  /health
+    GET  /events
+    GET  /debug            -> derniers JSON recus/envoyes
+    POST /function_PST
+    POST /function_VIP
+    POST /confirm_payment
+
+  Librairie requise:
+    - ArduinoJson (Library Manager)
+*/
+
+#include <WiFi.h>
+#include <WebServer.h>
+#include <ArduinoJson.h>
+
+// ===== WIFI CONFIG =====
+const char* WIFI_SSID = "idoomAdslFAR";
+const char* WIFI_PASSWORD = "19102025";
+
+// ===== SERVER =====
+WebServer server(80);
+
+// ===== IO (optionnel) =====
+const int LED_PST = 2;   // LED ticket normal
+const int LED_VIP = 4;   // LED ticket VIP
+const int BUZZER  = 5;   // buzzer optionnel
+
+// ===== EVENT STORE =====
+struct EventItem {
+  String type;           // PST | VIP | PAYMENT
+  String id_ticket;
+  String numero_ticket;
+  String etablissement;
+  String queue;
+  String date;
+  String payment_status; // FREE | PENDING | PAID
+};
+
+const int MAX_EVENTS = 30;
+EventItem eventsBuf[MAX_EVENTS];
+int eventsCount = 0;
+int eventsIndex = 0;
+
+// ===== DEBUG STATE =====
+String lastReceivedJson = "{}";
+String lastSentJson = "{}";
+String lastVipTicketId = "";
+
+void pushEvent(const EventItem& e) {
+  eventsBuf[eventsIndex] = e;
+  eventsIndex = (eventsIndex + 1) % MAX_EVENTS;
+  if (eventsCount < MAX_EVENTS) eventsCount++;
+}
+
+void blinkPin(int pin, int ms = 120) {
+  digitalWrite(pin, HIGH);
+  delay(ms);
+  digitalWrite(pin, LOW);
+}
+
+void beep(int ms = 80) {
+  digitalWrite(BUZZER, HIGH);
+  delay(ms);
+  digitalWrite(BUZZER, LOW);
+}
+
+void sendJsonTracked(int code, JsonDocument& doc) {
+  String out;
+  serializeJson(doc, out);
+  lastSentJson = out;
+  server.send(code, "application/json", out);
+}
+
+bool parseBody(JsonDocument& doc) {
+  if (!server.hasArg("plain")) return false;
+  String body = server.arg("plain");
+  lastReceivedJson = body;
+  DeserializationError err = deserializeJson(doc, body);
+  return !err;
+}
+
+void handleRoot() {
+  String html = R"rawliteral(
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>ESP32 WaQtek Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:Arial,sans-serif;padding:16px;background:#f5f5f5}
+    .card{background:#fff;padding:16px;border-radius:10px;max-width:980px;margin:auto}
+    pre{background:#111;color:#00ff66;padding:10px;border-radius:8px;overflow:auto;max-height:240px}
+    button{padding:10px 14px;margin:6px 0;cursor:pointer}
+    input{padding:8px;width:340px;max-width:100%}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#eaeaea}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>ESP32 WaQtek - Test</h2>
+    <p><span class="pill">Dernier ticket VIP: <b id="vip">-</b></span></p>
+
+    <div class="row">
+      <input id="ticketId" placeholder="id_ticket (vide = dernier VIP)" />
+      <button onclick="confirmPay()">Confirmer paiement</button>
+      <button onclick="refreshNow()">Rafraichir</button>
+    </div>
+    <p id="status"></p>
+
+    <h3>Derniere requete recue</h3>
+    <pre id="recv">{}</pre>
+
+    <h3>Derniere reponse envoyee</h3>
+    <pre id="sent">{}</pre>
+
+    <h3>Health</h3>
+    <pre id="health">{}</pre>
+  </div>
+
+<script>
+async function refreshNow() {
+  try {
+    const d = await (await fetch('/debug')).json();
+    document.getElementById('vip').textContent = d.last_vip_ticket_id || '-';
+    document.getElementById('recv').textContent = d.last_received_json || '{}';
+    document.getElementById('sent').textContent = d.last_sent_json || '{}';
+
+    const h = await (await fetch('/health')).json();
+    document.getElementById('health').textContent = JSON.stringify(h, null, 2);
+  } catch (e) {
+    document.getElementById('status').textContent = 'Erreur refresh: ' + e.message;
+  }
+}
+
+async function confirmPay() {
+  const typed = document.getElementById('ticketId').value.trim();
+  const vip = document.getElementById('vip').textContent.trim();
+  const id = typed || (vip !== '-' ? vip : '');
+  if (!id) {
+    document.getElementById('status').textContent = 'Aucun id_ticket disponible.';
+    return;
+  }
+
+  try {
+    const res = await fetch('/confirm_payment', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ id_ticket: id, paid: true })
+    });
+    const txt = await res.text();
+    document.getElementById('status').textContent = 'Reponse confirm_payment: ' + txt;
+    await refreshNow();
+  } catch (e) {
+    document.getElementById('status').textContent = 'Erreur confirm_payment: ' + e.message;
+  }
+}
+
+refreshNow();
+setInterval(refreshNow, 2000);
+</script>
+</body>
+</html>
+)rawliteral";
+  server.send(200, "text/html", html);
+}
+
+void handleHealth() {
+  DynamicJsonDocument doc(256);
+  doc["ok"] = true;
+  doc["service"] = "esp32-waqtek";
+  doc["ip"] = WiFi.localIP().toString();
+  doc["rssi"] = WiFi.RSSI();
+  sendJsonTracked(200, doc);
+}
+
+void handleDebug() {
+  DynamicJsonDocument doc(1024);
+  doc["ok"] = true;
+  doc["last_vip_ticket_id"] = lastVipTicketId;
+  doc["last_received_json"] = lastReceivedJson;
+  doc["last_sent_json"] = lastSentJson;
+  sendJsonTracked(200, doc);
+}
+
+void handlePST() {
+  DynamicJsonDocument req(768);
+  DynamicJsonDocument res(512);
+
+  if (!parseBody(req)) {
+    res["ok"] = false;
+    res["error"] = "invalid_json";
+    return sendJsonTracked(400, res);
+  }
+
+  String id_ticket      = req["id_ticket"] | "";
+  String numero_ticket  = req["numero_ticket"] | "";
+  String etablissement  = req["etablissement"] | "";
+  String queue          = req["queue"] | "";
+  String date           = req["date"] | "";
+
+  if (id_ticket.length() == 0 || numero_ticket.length() == 0) {
+    res["ok"] = false;
+    res["error"] = "missing_fields";
+    res["required"] = "id_ticket, numero_ticket";
+    return sendJsonTracked(400, res);
+  }
+
+  EventItem e;
+  e.type = "PST";
+  e.id_ticket = id_ticket;
+  e.numero_ticket = numero_ticket;
+  e.etablissement = etablissement;
+  e.queue = queue;
+  e.date = date;
+  e.payment_status = "FREE";
+  pushEvent(e);
+
+  Serial.println("[PST] Ticket recu");
+  Serial.println(" id_ticket: " + id_ticket);
+  Serial.println(" numero_ticket: " + numero_ticket);
+  Serial.println(" etablissement: " + etablissement);
+  Serial.println(" queue: " + queue);
+  Serial.println(" date: " + date);
+
+  blinkPin(LED_PST, 120);
+  beep(60);
+
+  res["ok"] = true;
+  res["type"] = "PST";
+  res["id_ticket"] = id_ticket;
+  res["numero_ticket"] = numero_ticket;
+  res["payment_status"] = "FREE";
+  sendJsonTracked(200, res);
+}
+
+void handleVIP() {
+  DynamicJsonDocument req(768);
+  DynamicJsonDocument res(512);
+
+  if (!parseBody(req)) {
+    res["ok"] = false;
+    res["error"] = "invalid_json";
+    return sendJsonTracked(400, res);
+  }
+
+  String id_ticket     = req["id_ticket"] | "";
+  String etablissement = req["etablissement"] | "";
+  String queue         = req["queue"] | "";
+  String date          = req["date"] | "";
+
+  if (id_ticket.length() == 0) {
+    res["ok"] = false;
+    res["error"] = "missing_fields";
+    res["required"] = "id_ticket";
+    return sendJsonTracked(400, res);
+  }
+
+  lastVipTicketId = id_ticket;
+
+  EventItem e;
+  e.type = "VIP";
+  e.id_ticket = id_ticket;
+  e.numero_ticket = "";
+  e.etablissement = etablissement;
+  e.queue = queue;
+  e.date = date;
+  e.payment_status = "PENDING";
+  pushEvent(e);
+
+  Serial.println("[VIP] Ticket VIP recu");
+  Serial.println(" id_ticket: " + id_ticket);
+  Serial.println(" etablissement: " + etablissement);
+  Serial.println(" queue: " + queue);
+  Serial.println(" date: " + date);
+  Serial.println(" payment_status: PENDING");
+
+  blinkPin(LED_VIP, 220);
+  beep(120);
+
+  res["ok"] = true;
+  res["type"] = "VIP";
+  res["id_ticket"] = id_ticket;
+  res["payment_status"] = "PENDING";
+  sendJsonTracked(200, res);
+}
+
+void handleConfirmPayment() {
+  DynamicJsonDocument req(512);
+  DynamicJsonDocument res(512);
+
+  if (!parseBody(req)) {
+    res["ok"] = false;
+    res["error"] = "invalid_json";
+    return sendJsonTracked(400, res);
+  }
+
+  String id_ticket = req["id_ticket"] | "";
+  bool paid = req["paid"] | false;
+
+  if (id_ticket.length() == 0) {
+    res["ok"] = false;
+    res["error"] = "missing_fields";
+    res["required"] = "id_ticket";
+    return sendJsonTracked(400, res);
+  }
+
+  EventItem e;
+  e.type = "PAYMENT";
+  e.id_ticket = id_ticket;
+  e.numero_ticket = "";
+  e.etablissement = "";
+  e.queue = "";
+  e.date = "";
+  e.payment_status = paid ? "PAID" : "PENDING";
+  pushEvent(e);
+
+  Serial.println("[PAYMENT] id_ticket=" + id_ticket + " paid=" + String(paid ? "true" : "false"));
+
+  if (paid) {
+    blinkPin(LED_VIP, 100);
+    delay(70);
+    blinkPin(LED_VIP, 100);
+    beep(70);
+  }
+
+  res["ok"] = true;
+  res["type"] = "PAYMENT";
+  res["id_ticket"] = id_ticket;
+  res["payment_status"] = paid ? "PAID" : "PENDING";
+  sendJsonTracked(200, res);
+}
+
+void handleEvents() {
+  DynamicJsonDocument doc(4096);
+  doc["ok"] = true;
+  JsonArray arr = doc.createNestedArray("events");
+
+  for (int i = 0; i < eventsCount; i++) {
+    int idx = (eventsIndex - eventsCount + i + MAX_EVENTS) % MAX_EVENTS;
+    const EventItem& e = eventsBuf[idx];
+
+    JsonObject o = arr.createNestedObject();
+    o["type"] = e.type;
+    o["id_ticket"] = e.id_ticket;
+    o["numero_ticket"] = e.numero_ticket;
+    o["etablissement"] = e.etablissement;
+    o["queue"] = e.queue;
+    o["date"] = e.date;
+    o["payment_status"] = e.payment_status;
+  }
+
+  sendJsonTracked(200, doc);
+}
+
+void handleNotFound() {
+  DynamicJsonDocument doc(256);
+  doc["ok"] = false;
+  doc["error"] = "not_found";
+  doc["path"] = server.uri();
+  sendJsonTracked(404, doc);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(LED_PST, OUTPUT);
+  pinMode(LED_VIP, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(LED_PST, LOW);
+  digitalWrite(LED_VIP, LOW);
+  digitalWrite(BUZZER, LOW);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connexion WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi OK");
+  Serial.print("IP ESP32: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/health", HTTP_GET, handleHealth);
+  server.on("/events", HTTP_GET, handleEvents);
+  server.on("/debug", HTTP_GET, handleDebug);
+
+  server.on("/function_PST", HTTP_POST, handlePST);
+  server.on("/function_VIP", HTTP_POST, handleVIP);
+  server.on("/confirm_payment", HTTP_POST, handleConfirmPayment);
+
+  server.onNotFound(handleNotFound);
+
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void loop() {
+  server.handleClient();
+}

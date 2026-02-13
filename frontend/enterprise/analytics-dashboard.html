@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>WaQtek | Statistiques Revenus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+    <link rel="stylesheet" href="../css/enterprise-menu.css">
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #eef2f6; }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 240px; background: #0f172a; color: #fff; padding: 20px; }
+        .sidebar h2 { text-align: center; margin-bottom: 24px; }
+        .sidebar a { display: block; color: #cbd5e1; text-decoration: none; padding: 12px; border-radius: 6px; margin-bottom: 8px; }
+        .sidebar a:hover { background: #1e293b; color: #fff; }
+        .content { flex: 1; padding: 24px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+        .filters select, .filters input, .filters button { padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .btn { background: #0f766e; color: #fff; border: none; cursor: pointer; }
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px; }
+        .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.06); }
+        .card h3 { margin: 0; font-size: 13px; color: #64748b; }
+        .card p { margin: 8px 0 0; font-size: 28px; font-weight: 700; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .chart-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.06); }
+        .chart-title { margin: 0 0 10px 0; font-size: 15px; color: #334155; }
+        @media (max-width: 980px) { .layout { flex-direction: column; } .sidebar { width: 100%; } .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <main class="content">
+        <div class="header">
+            <h1>Statistiques Revenus</h1>
+            <button class="btn" onclick="logout()">Deconnexion</button>
+        </div>
+
+        <div class="filters">
+            <select id="establishmentFilter"></select>
+            <input type="date" id="startDate" />
+            <input type="date" id="endDate" />
+            <button id="refreshBtn" class="btn">Actualiser</button>
+        </div>
+
+        <section class="kpis">
+            <div class="card"><h3>Revenu journalier</h3><p id="kpiDailyRevenue">0 FCFA</p></div>
+            <div class="card"><h3>Revenu mensuel</h3><p id="kpiMonthlyRevenue">0 FCFA</p></div>
+            <div class="card"><h3>Tickets VIP vendus</h3><p id="kpiVipCount">0</p></div>
+        </section>
+
+        <section class="grid">
+            <div class="chart-card">
+                <h2 class="chart-title">Revenus par jour</h2>
+                <canvas id="dailyRevenueChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2 class="chart-title">Revenus par mois</h2>
+                <canvas id="monthlyRevenueChart"></canvas>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/core/StateManager.js"></script>
+<script src="../js/core/ApiClient.js"></script>
+<script src="../js/core/WebSocketClient.js"></script>
+<script src="../js/core/lazy-loader.js"></script>
+<script src="../js/init.js"></script>
+<script src="../js/services/AuthService.js"></script>
+<script src="../js/services/EstablishmentService.js"></script>
+<script src="../js/services/QueueService.js"></script>
+<script src="../js/services/RealtimeService.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let statsFeaturePromise = null;
+
+function ensureStatsFeatureLoaded() {
+    if (statsFeaturePromise) return statsFeaturePromise;
+
+    statsFeaturePromise = window.lazyLoadFeature("stats", [
+        "https://cdn.jsdelivr.net/npm/chart.js",
+        "../js/services/StatsService.js",
+        "../js/pages/enterprise/stats.js"
+    ]);
+
+    return statsFeaturePromise;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const triggerLoad = () => ensureStatsFeatureLoaded();
+
+    if ("requestIdleCallback" in window) {
+        requestIdleCallback(triggerLoad, { timeout: 1200 });
+    } else {
+        setTimeout(triggerLoad, 0);
+    }
+
+    const refreshBtn = document.getElementById("refreshBtn");
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", () => {
+            ensureStatsFeatureLoaded();
+        }, { once: true });
+    }
+});
+</script>
+
+<script src="../js/enterprise-pages.js"></script>
+<script src="../js/components/enterprise-menu.js"></script>
+</body>
+</html>

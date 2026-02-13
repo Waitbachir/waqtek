@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaQtek - Test Signup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .test-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+        }
+
+        .test-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .test-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-box {
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #333;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .status-ok {
+            border-left-color: #4CAF50;
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .status-error {
+            border-left-color: #f44336;
+            background: #ffebee;
+            color: #b71c1c;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-buttons button {
+            margin: 0;
+        }
+
+        .divider {
+            height: 1px;
+            background: #eee;
+            margin: 30px 0;
+        }
+    </style>
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔐 WaQtek Signup Test</h1>
+        <p class="subtitle">Test de l'intégration du formulaire d'inscription</p>
+
+        <!-- Server Status -->
+        <div class="test-section">
+            <div class="test-title">Statut du serveur</div>
+            <button onclick="testServerConnection()">Tester la connexion</button>
+            <div id="serverStatus"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Manual Signup Test -->
+        <div class="test-section">
+            <div class="test-title">Test d'inscription</div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="user@example.com" value="testuser@example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" placeholder="Votre mot de passe" value="TestPass123!">
+            </div>
+
+            <div class="form-group">
+                <label for="fullName">Nom complet</label>
+                <input type="text" id="fullName" placeholder="Votre nom" value="Test User">
+            </div>
+
+            <button onclick="testSignup()">Envoyer l'inscription</button>
+            <div id="signupResult"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Navigation -->
+        <div class="test-section">
+            <div class="test-title">Navigation</div>
+            <div class="action-buttons">
+                <button onclick="goToSignup()">→ Aller à Signup</button>
+                <button onclick="goToLogin()">→ Aller à Login</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+
+        async function testServerConnection() {
+            const resultDiv = document.getElementById('serverStatus');
+            resultDiv.innerHTML = '<div class="result-box"><span class="loading"></span>Connexion en cours...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/debug`, {
+                    method: 'GET',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<div class="result-box status-ok">✅ SERVEUR EN LIGNE\n\nStatus: ${response.status}\nRéponse: ${JSON.stringify(data, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result-box status-error">❌ ERREUR\n\nStatus: ${response.status}\nVérifiez que le serveur backend s'exécute sur le port 5000</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result-box status-error">❌ IMPOSSIBLE DE SE CONNECTER\n\nErreur: ${error.message}\n\n💡 Assurez-vous que:\n- Le serveur backend s'exécute\n- Le port 5000 est accessible\n- CORS est activé</div>`;
+            }
+        }
+
+        async function testSignup() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const fullName = document.getElementById('fullName').value;
+            const resultDiv = document.getElementById('signupResult');
+
+            if (!email || !password || !fullName) {
+                resultDiv.innerHTML = '<div class="result-box status-error">❌ Veuillez remplir tous les champs</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="result-box"><span class="loading"></span>Envoi de l\'inscription...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        full_name: fullName,
+                        role: 'admin'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok || response.status === 201) {
+                    resultDiv.innerHTML = `<div class="result-box status-ok">✅ INSCRIPTION RÉUSSIE\n\nStatus: ${response.status}\nToken: ${data.token ? data.token.substring(0, 50) + '...' : 'Non fourni'}\n\nRéponse complète:\n${JSON.stringify(data, null, 2)}</div>`;
+                    
+                    // Sauvegarder le token
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                        console.log('✅ Token sauvegardé dans localStorage');
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="result-box status-error">❌ ERREUR D'INSCRIPTION\n\nStatus: ${response.status}\nRéponse:\n${JSON.stringify(data, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result-box status-error">❌ ERREUR RÉSEAU\n\nErreur: ${error.message}\n\n${error.stack}</div>`;
+            }
+        }
+
+        function goToSignup() {
+            window.location.href = './enterprise/sign-up.html';
+        }
+
+        function goToLogin() {
+            window.location.href = './enterprise/sign-in.html';
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            console.log('Page de test chargée');
+            // Optionnellement, tester automatiquement la connexion
+            // testServerConnection();
+        });
+    </script>
+
+<script src="./js/pages.js"></script>
+<script src="./js/components/dynamic-menu.js"></script>
+</body>
+</html>
+

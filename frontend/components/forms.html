@@ -1,0 +1,648 @@
+<!-- WaQtek Professional CRUD Forms -->
+<!-- This file contains reusable form components -->
+
+<style>
+    /* ================== FORM STYLES ================== */
+    
+    .form-container {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-2xl);
+        box-shadow: var(--shadow-lg);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .form-header {
+        margin-bottom: var(--spacing-2xl);
+        border-bottom: 2px solid var(--gray-200);
+        padding-bottom: var(--spacing-lg);
+    }
+
+    .form-header h2 {
+        margin: 0;
+        color: var(--gray-900);
+        font-size: 1.875rem;
+    }
+
+    .form-group {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: var(--spacing-sm);
+        color: var(--gray-700);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-lg);
+        border: 2px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .form-row .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-2xl);
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .form-actions button {
+        flex: 1;
+        padding: var(--spacing-md) var(--spacing-lg);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: var(--white);
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-cancel {
+        background: var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .btn-cancel:hover {
+        background: var(--gray-300);
+    }
+
+    .form-error {
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-lg);
+        display: none;
+    }
+
+    .form-error.show {
+        display: block;
+    }
+
+    .form-success {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #166534;
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-lg);
+        display: none;
+    }
+
+    .form-success.show {
+        display: block;
+    }
+
+    .form-loading {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f4f6;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: var(--spacing-sm);
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ================== MODAL STYLES ================== */
+    
+    .modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal-backdrop.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s ease;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: var(--spacing-lg);
+        right: var(--spacing-lg);
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--gray-500);
+    }
+
+    .modal-close:hover {
+        color: var(--gray-900);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<!-- ==================== QUEUE FORM ==================== -->
+<template id="queue-form-template">
+    <div class="modal-backdrop" id="queueFormBackdrop">
+        <div class="modal">
+            <button class="modal-close" onclick="closeQueueForm()">&times;</button>
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 id="queueFormTitle">Créer une queue</h2>
+                </div>
+
+                <div class="form-error" id="queueFormError"></div>
+                <div class="form-success" id="queueFormSuccess"></div>
+
+                <form id="queueForm" onsubmit="submitQueueForm(event)">
+                    <div class="form-group">
+                        <label for="queueName">Nom de la queue *</label>
+                        <input 
+                            type="text" 
+                            id="queueName" 
+                            name="name" 
+                            placeholder="Ex: Accueil, Support Client..."
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="queueDescription">Description</label>
+                        <textarea 
+                            id="queueDescription" 
+                            name="description" 
+                            placeholder="Description optionnelle..."
+                        ></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="queueCapacity">Capacité maximale</label>
+                            <input 
+                                type="number" 
+                                id="queueCapacity" 
+                                name="max_capacity" 
+                                min="1"
+                                placeholder="0 = illimitée"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="queueStatus">Statut</label>
+                            <select id="queueStatus" name="status">
+                                <option value="active">Active</option>
+                                <option value="paused">Pausée</option>
+                                <option value="closed">Fermée</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="closeQueueForm()">Annuler</button>
+                        <button type="submit" class="btn-submit">
+                            <span id="queueSubmitText">Créer</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ==================== ESTABLISHMENT FORM ==================== -->
+<template id="establishment-form-template">
+    <div class="modal-backdrop" id="establishmentFormBackdrop">
+        <div class="modal">
+            <button class="modal-close" onclick="closeEstablishmentForm()">&times;</button>
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 id="establishmentFormTitle">Créer un établissement</h2>
+                </div>
+
+                <div class="form-error" id="establishmentFormError"></div>
+                <div class="form-success" id="establishmentFormSuccess"></div>
+
+                <form id="establishmentForm" onsubmit="submitEstablishmentForm(event)">
+                    <div class="form-group">
+                        <label for="establishmentName">Nom *</label>
+                        <input 
+                            type="text" 
+                            id="establishmentName" 
+                            name="name" 
+                            placeholder="Nom de l'établissement"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="establishmentAddress">Adresse</label>
+                        <input 
+                            type="text" 
+                            id="establishmentAddress" 
+                            name="address" 
+                            placeholder="Rue, numéro..."
+                        >
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="establishmentCity">Ville</label>
+                            <input 
+                                type="text" 
+                                id="establishmentCity" 
+                                name="city" 
+                                placeholder="Ville"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="establishmentPhone">Téléphone</label>
+                            <input 
+                                type="tel" 
+                                id="establishmentPhone" 
+                                name="phone" 
+                                placeholder="Téléphone"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="establishmentEmail">Email</label>
+                        <input 
+                            type="email" 
+                            id="establishmentEmail" 
+                            name="email" 
+                            placeholder="email@exemple.com"
+                        >
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="closeEstablishmentForm()">Annuler</button>
+                        <button type="submit" class="btn-submit">
+                            <span id="establishmentSubmitText">Créer</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ==================== SETTINGS FORM ==================== -->
+<template id="settings-form-template">
+    <div class="form-container">
+        <div class="form-header">
+            <h2>Paramètres du compte</h2>
+        </div>
+
+        <div class="form-error" id="settingsFormError"></div>
+        <div class="form-success" id="settingsFormSuccess"></div>
+
+        <form id="settingsForm" onsubmit="submitSettingsForm(event)">
+            <!-- PROFIL -->
+            <div style="margin-bottom: var(--spacing-2xl); padding-bottom: var(--spacing-lg); border-bottom: 1px solid var(--gray-200);">
+                <h3 style="color: var(--gray-900); margin-top: 0;">Profil</h3>
+
+                <div class="form-group">
+                    <label for="fullName">Nom complet</label>
+                    <input type="text" id="fullName" name="fullName" placeholder="Votre nom">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Adresse email</label>
+                    <input type="email" id="email" name="email" placeholder="votre@email.com" readonly style="opacity: 0.6;">
+                </div>
+            </div>
+
+            <!-- MOT DE PASSE -->
+            <div style="margin-bottom: var(--spacing-2xl); padding-bottom: var(--spacing-lg); border-bottom: 1px solid var(--gray-200);">
+                <h3 style="color: var(--gray-900); margin-top: 0;">Sécurité</h3>
+
+                <div class="form-group">
+                    <label for="currentPassword">Mot de passe actuel</label>
+                    <input type="password" id="currentPassword" name="currentPassword" placeholder="••••••••">
+                </div>
+
+                <div class="form-group">
+                    <label for="newPassword">Nouveau mot de passe</label>
+                    <input type="password" id="newPassword" name="newPassword" placeholder="••••••••">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmer le mot de passe</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••">
+                </div>
+            </div>
+
+            <!-- NOTIFICATIONS -->
+            <div style="margin-bottom: var(--spacing-2xl);">
+                <h3 style="color: var(--gray-900); margin-top: 0;">Notifications</h3>
+
+                <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                    <input type="checkbox" id="notificationsEmail" name="notificationsEmail" checked>
+                    <label for="notificationsEmail" style="margin: 0;">Recevoir les emails de notification</label>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                    <input type="checkbox" id="notificationsPush" name="notificationsPush" checked>
+                    <label for="notificationsPush" style="margin: 0;">Recevoir les notifications push</label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="reset" class="btn-cancel">Réinitialiser</button>
+                <button type="submit" class="btn-submit">
+                    <span id="settingsSubmitText">Enregistrer les modifications</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</template>
+
+<script>
+// ==================== QUEUE FORM FUNCTIONS ====================
+
+function openQueueForm(queueId = null) {
+    const template = document.getElementById('queue-form-template');
+    if (!template) return;
+
+    const form = template.content.cloneNode(true);
+    const container = document.getElementById('modal-container') || document.body;
+    const formElement = form.querySelector('#queueFormBackdrop');
+
+    container.appendChild(form);
+    setTimeout(() => {
+        document.getElementById('queueFormBackdrop').classList.add('show');
+    }, 10);
+
+    if (queueId) {
+        // Load queue data for editing
+        loadQueueForEdit(queueId);
+        document.getElementById('queueFormTitle').textContent = 'Modifier la queue';
+        document.getElementById('queueSubmitText').textContent = 'Mettre à jour';
+    }
+}
+
+function closeQueueForm() {
+    const backdrop = document.getElementById('queueFormBackdrop');
+    if (backdrop) {
+        backdrop.classList.remove('show');
+        setTimeout(() => backdrop.remove(), 300);
+    }
+}
+
+async function submitQueueForm(event) {
+    event.preventDefault();
+    const form = document.getElementById('queueForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitText = document.getElementById('queueSubmitText');
+
+    try {
+        submitBtn.disabled = true;
+        submitText.innerHTML = '<span class="form-loading"></span>Traitement...';
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        const response = await fetch('/api/queues', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('waqtek_token')}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la création');
+        }
+
+        showSuccess('queueFormSuccess', 'Queue créée avec succès!');
+        setTimeout(() => {
+            closeQueueForm();
+            location.reload();
+        }, 1500);
+
+    } catch (error) {
+        showError('queueFormError', error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitText.textContent = 'Créer';
+    }
+}
+
+// ==================== ESTABLISHMENT FORM FUNCTIONS ====================
+
+function openEstablishmentForm(establishmentId = null) {
+    const template = document.getElementById('establishment-form-template');
+    if (!template) return;
+
+    const form = template.content.cloneNode(true);
+    const container = document.getElementById('modal-container') || document.body;
+
+    container.appendChild(form);
+    setTimeout(() => {
+        document.getElementById('establishmentFormBackdrop').classList.add('show');
+    }, 10);
+
+    if (establishmentId) {
+        loadEstablishmentForEdit(establishmentId);
+        document.getElementById('establishmentFormTitle').textContent = 'Modifier l\'établissement';
+        document.getElementById('establishmentSubmitText').textContent = 'Mettre à jour';
+    }
+}
+
+function closeEstablishmentForm() {
+    const backdrop = document.getElementById('establishmentFormBackdrop');
+    if (backdrop) {
+        backdrop.classList.remove('show');
+        setTimeout(() => backdrop.remove(), 300);
+    }
+}
+
+async function submitEstablishmentForm(event) {
+    event.preventDefault();
+    const form = document.getElementById('establishmentForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitText = document.getElementById('establishmentSubmitText');
+
+    try {
+        submitBtn.disabled = true;
+        submitText.innerHTML = '<span class="form-loading"></span>Traitement...';
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        const response = await fetch('/api/establishments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('waqtek_token')}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la création');
+        }
+
+        showSuccess('establishmentFormSuccess', 'Établissement créé avec succès!');
+        setTimeout(() => {
+            closeEstablishmentForm();
+            location.reload();
+        }, 1500);
+
+    } catch (error) {
+        showError('establishmentFormError', error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitText.textContent = 'Créer';
+    }
+}
+
+// ==================== SETTINGS FORM FUNCTIONS ====================
+
+async function submitSettingsForm(event) {
+    event.preventDefault();
+    const form = document.getElementById('settingsForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitText = document.getElementById('settingsSubmitText');
+
+    try {
+        submitBtn.disabled = true;
+        submitText.innerHTML = '<span class="form-loading"></span>Enregistrement...';
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        const response = await fetch('/api/settings', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('waqtek_token')}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de l\'enregistrement');
+        }
+
+        showSuccess('settingsFormSuccess', 'Paramètres enregistrés avec succès!');
+
+    } catch (error) {
+        showError('settingsFormError', error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitText.textContent = 'Enregistrer les modifications';
+    }
+}
+
+// ==================== HELPER FUNCTIONS ====================
+
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = message;
+        element.classList.add('show');
+    }
+}
+
+function showSuccess(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = message;
+        element.classList.add('show');
+    }
+}
+
+async function loadQueueForEdit(queueId) {
+    // Implementation for loading queue data
+}
+
+async function loadEstablishmentForEdit(establishmentId) {
+    // Implementation for loading establishment data
+}
+
+// Close modals when clicking backdrop
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-backdrop')) {
+        e.target.classList.remove('show');
+        setTimeout(() => e.target.remove(), 300);
+    }
+});
+</script>

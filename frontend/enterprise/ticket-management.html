@@ -1,0 +1,279 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>WaQtek | Gestion des Tickets</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: "#0f172a",
+        accent: "#3b82f6"
+      }
+    }
+  }
+}
+</script>
+    <link rel="stylesheet" href="../css/responsive.css">
+    <link rel="stylesheet" href="../css/enterprise-menu.css">
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+
+<div class="max-w-7xl mx-auto p-4 md:p-6">
+
+  <!-- HEADER -->
+  <div class="bg-white shadow rounded-2xl p-6 mb-6 flex flex-col xl:flex-row justify-between gap-4 xl:items-center">
+    
+    <div>
+      <h1 class="text-2xl font-bold">Gestion des Tickets</h1>
+      <p class="text-sm text-slate-500">Gestion en temps rÃ©el des files dâ€™attente</p>
+    </div>
+
+    <div class="flex flex-wrap gap-3 items-center">
+
+      <select id="establishmentSelect"
+        class="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-accent outline-none min-w-[200px]">
+        <option value="">-- Ã‰tablissement --</option>
+      </select>
+
+      <select id="queueSelect" disabled
+        class="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-accent outline-none min-w-[200px] disabled:bg-slate-200">
+        <option value="">-- File d'attente --</option>
+      </select>
+
+      <select id="counterSelect"
+        class="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-accent outline-none min-w-[160px]">
+        <option value="">-- Guichet --</option>
+        <option value="1">Guichet 1</option>
+        <option value="2">Guichet 2</option>
+        <option value="3">Guichet 3</option>
+        <option value="4">Guichet 4</option>
+        <option value="5">Guichet 5</option>
+        <option value="6">Guichet 6</option>
+        <option value="7">Guichet 7</option>
+        <option value="8">Guichet 8</option>
+        <option value="9">Guichet 9</option>
+        <option value="10">Guichet 10</option>
+      </select>
+
+      <button onclick="refreshData()"
+        class="bg-accent hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-medium shadow transition">
+        Actualiser
+      </button>
+
+      <button onclick="logout()"
+        class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium shadow transition">
+        DÃ©connexion
+      </button>
+
+    </div>
+  </div>
+
+  <div id="syncBanner" class="hidden mb-6 rounded-xl border px-4 py-3 text-sm"></div>
+
+  <!-- MAIN GRID -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <!-- CURRENT TICKET -->
+    <div class="xl:col-span-1 space-y-6">
+
+      <div id="currentTicketBox"
+        class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl shadow-lg p-8 text-center">
+
+        <p class="uppercase text-xs tracking-wider opacity-80">
+          Ticket en cours
+        </p>
+
+        <div id="currentTicketNumber" class="text-4xl md:text-6xl font-bold my-6">â€”</div>
+
+        <p id="currentTicketStatus" class="opacity-80">Aucun ticket</p>
+        <p id="currentTicketCounter" class="opacity-80 text-sm mt-2">Guichet -</p>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="bg-white rounded-2xl shadow p-6 space-y-4">
+
+        <button id="callBtn" disabled onclick="callNextTicket()"
+          class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+          Appeler le prochain
+        </button>
+
+        <button id="serveBtn" disabled onclick="serveCurrentTicket()"
+          class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+          Servi
+        </button>
+
+        <button id="missBtn" disabled onclick="missCurrentTicket()"
+          class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+          Absent
+        </button>
+
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="xl:col-span-2 bg-white rounded-2xl shadow p-6">
+
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold">File d'attente</h2>
+      </div>
+
+      <!-- STATS -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+
+        <div class="bg-slate-50 rounded-xl p-4 text-center border">
+          <p class="text-xs uppercase text-slate-500">En attente</p>
+          <p id="waitingCount" class="text-2xl font-bold mt-1">0</p>
+        </div>
+
+        <div class="bg-slate-50 rounded-xl p-4 text-center border">
+          <p class="text-xs uppercase text-slate-500">AppelÃ©s</p>
+          <p id="calledCount" class="text-2xl font-bold mt-1">0</p>
+        </div>
+
+        <div class="bg-slate-50 rounded-xl p-4 text-center border">
+          <p class="text-xs uppercase text-slate-500">Servis</p>
+          <p id="servedCount" class="text-2xl font-bold mt-1">0</p>
+        </div>
+
+        <div class="bg-slate-50 rounded-xl p-4 text-center border">
+          <p class="text-xs uppercase text-slate-500">Absents</p>
+          <p id="missedCount" class="text-2xl font-bold mt-1">0</p>
+        </div>
+
+      </div>
+
+      <!-- TABLE -->
+      <div class="overflow-auto max-h-[500px] rounded-lg border">
+
+        <table class="w-full text-sm">
+          <thead class="bg-slate-100 sticky top-0 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 text-left">NÂ°</th>
+              <th class="px-4 py-3 text-left">Statut</th>
+              <th class="px-4 py-3 text-left">Client</th>
+              <th class="px-4 py-3 text-left">Contact</th>
+              <th class="px-4 py-3 text-left">Priorite</th>
+              <th class="px-4 py-3 text-left">Heure</th>
+              <th class="px-4 py-3 text-left">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody id="ticketsTable" class="divide-y">
+            <tr>
+              <td colspan="7" class="text-center py-10 text-slate-400">
+                SÃ©lectionnez une file d'attente
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="text-center text-xs text-slate-500 mt-8">
+    WaQtek Â© 2026 â€“ SystÃ¨me de gestion de files dâ€™attente
+  </div>
+
+</div>
+
+
+<!-- CORE SCRIPTS (INCHANGÃ‰S) -->
+<script src="../js/config.js"></script>
+<script src="../js/core/StateManager.js"></script>
+<script src="../js/core/ApiClient.js"></script>
+<script src="../js/core/WebSocketClient.js"></script>
+<script src="../js/core/lazy-loader.js"></script>
+<script src="../js/init.js"></script>
+
+<script src="../js/services/AuthService.js"></script>
+<script src="../js/services/EstablishmentService.js"></script>
+<script src="../js/services/QueueService.js"></script>
+<script src="../js/services/RealtimeService.js"></script>
+
+<script src="../js/utils.js"></script>
+<script>
+let ticketsFeaturePromise = null;
+
+function ensureTicketsFeatureLoaded() {
+  if (ticketsFeaturePromise) return ticketsFeaturePromise;
+  ticketsFeaturePromise = window.lazyLoadFeature("tickets", [
+    "../js/services/TicketService.js",
+    "../js/pages/enterprise/manage-tickets.js"
+  ]);
+  return ticketsFeaturePromise;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(() => ensureTicketsFeatureLoaded(), { timeout: 900 });
+  } else {
+    setTimeout(() => ensureTicketsFeatureLoaded(), 0);
+  }
+});
+</script>
+
+<!-- Helper Functions (inchangÃ©es) -->
+<script>
+async function logout() {
+  try {
+    if (window.AuthService && typeof AuthService.logout === 'function') {
+      await AuthService.logout();
+    } else {
+      localStorage.removeItem("waqtek_token");
+      localStorage.removeItem("waqtek_user");
+    }
+  } finally {
+    window.location.href = "sign-in.html";
+  }
+}
+
+async function refreshData() {
+  await ensureTicketsFeatureLoaded();
+  if (typeof loadTicketsForQueue === 'function' && window.pageState && window.pageState.selectedQueueId) {
+    await loadTicketsForQueue(window.pageState.selectedQueueId);
+  }
+}
+
+async function callNextTicket() {
+  await ensureTicketsFeatureLoaded();
+  if (typeof handleCallNextTicket === 'function') {
+    await handleCallNextTicket();
+  }
+}
+
+async function serveCurrentTicket() {
+  await ensureTicketsFeatureLoaded();
+  if (typeof handleUpdateTicketStatus === 'function' && window.pageState && window.pageState.currentTicketId) {
+    await handleUpdateTicketStatus(window.pageState.currentTicketId, 'served');
+  }
+}
+
+async function missCurrentTicket() {
+  await ensureTicketsFeatureLoaded();
+  if (typeof handleUpdateTicketStatus === 'function' && window.pageState && window.pageState.currentTicketId) {
+    await handleUpdateTicketStatus(window.pageState.currentTicketId, 'missed');
+  }
+}
+</script>
+
+
+<script src="../js/enterprise-pages.js"></script>
+<script src="../js/components/enterprise-menu.js"></script>
+</body>
+</html>
+
+
+
+
+

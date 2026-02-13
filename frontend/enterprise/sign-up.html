@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaQtek - Inscription</title>
+    <meta name="description" content="Créer un compte WaQtek - Plateforme de gestion des files d'attente">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .signup-wrapper {
+            width: 100%;
+            max-width: 500px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .signup-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .signup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .signup-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .signup-header p {
+            font-size: 14px;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .signup-form {
+            padding: 40px;
+        }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            display: none;
+            gap: 12px;
+            align-items: flex-start;
+            animation: slideDown 0.3s ease-out;
+            border-left: 4px solid;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.show {
+            display: flex;
+        }
+
+        .alert-error {
+            background: #fee5e5;
+            color: #c41e3a;
+            border-left-color: #c41e3a;
+        }
+
+        .alert-success {
+            background: #e5f7e5;
+            color: #106d0f;
+            border-left-color: #106d0f;
+        }
+
+        .alert-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+
+        input[type="text"]::placeholder,
+        input[type="email"]::placeholder,
+        input[type="password"]::placeholder,
+        input[type="tel"]::placeholder {
+            color: #999;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="tel"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 12px 0 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: #667eea;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .checkbox-group a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .checkbox-group a:hover {
+            text-decoration: underline;
+        }
+
+        .password-strength {
+            margin-top: 6px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin: 4px 0;
+            overflow: hidden;
+        }
+
+        .strength-indicator {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .strength-indicator.weak {
+            width: 33%;
+            background-color: #ff6b6b;
+        }
+
+        .strength-indicator.fair {
+            width: 66%;
+            background-color: #ffd700;
+        }
+
+        .strength-indicator.strong {
+            width: 100%;
+            background-color: #51cf66;
+        }
+
+        .signup-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signup-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .signup-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .signup-btn:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 24px 0;
+        }
+
+        .login-section {
+            text-align: center;
+            padding-top: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .login-section a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.2s;
+        }
+
+        .login-section a:hover {
+            color: #764ba2;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 3px solid #667eea;
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        @media (max-width: 480px) {
+            .signup-wrapper {
+                max-width: 100%;
+            }
+
+            .signup-header {
+                padding: 30px 20px;
+            }
+
+            .signup-header h1 {
+                font-size: 28px;
+            }
+
+            .signup-form {
+                padding: 30px 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+    <div class="signup-wrapper">
+        <div class="signup-card">
+            <div class="signup-header">
+                <h1>WaQtek</h1>
+                <p>Créer votre Compte</p>
+            </div>
+
+            <div class="signup-form">
+                <div id="errorAlert" class="alert alert-error">
+                    <span class="alert-icon">!</span>
+                    <div id="errorMessage"></div>
+                </div>
+
+                <div id="successAlert" class="alert alert-success">
+                    <span class="alert-icon">✓</span>
+                    <div id="successMessage">Inscription réussie. Redirection en cours...</div>
+                </div>
+
+                <div class="info-box">
+                    💡 Créez un compte pour gérer vos files d'attente
+                </div>
+
+                <form id="signupForm" onsubmit="handleSignupSubmit(event)">
+                    <!-- Nom et Prénom -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">Prénom</label>
+                            <input 
+                                type="text" 
+                                id="firstName" 
+                                name="firstName" 
+                                placeholder="Jean" 
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Nom</label>
+                            <input 
+                                type="text" 
+                                id="lastName" 
+                                name="lastName" 
+                                placeholder="Dupont" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="email">Adresse Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="votre@email.com" 
+                            required 
+                            autocomplete="email"
+                        >
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div class="form-group">
+                        <label for="phone">Téléphone (Optionnel)</label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            name="phone" 
+                            placeholder="+212 6XX XXX XXX"
+                        >
+                    </div>
+
+                    <!-- Mot de Passe -->
+                    <div class="form-group">
+                        <label for="password">Mot de Passe</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="••••••••" 
+                            required 
+                            minlength="6"
+                        >
+                        <div class="password-strength" id="strengthDiv">
+                            <span id="strengthText" style="font-size: 12px; color: #999;"></span>
+                            <div class="strength-bar">
+                                <div class="strength-indicator" id="strengthBar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation Mot de Passe -->
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmer le Mot de Passe</label>
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            name="confirmPassword" 
+                            placeholder="••••••••" 
+                            required 
+                            minlength="6"
+                        >
+                    </div>
+
+                    <!-- Conditions d'Utilisation -->
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms">
+                            J'accepte les <a href="#terms" target="_blank">conditions d'utilisation</a> et la <a href="#privacy" target="_blank">politique de confidentialité</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="signup-btn" id="signupBtn">Créer mon Compte</button>
+                </form>
+
+                <div class="divider"></div>
+
+                <div class="login-section">
+                    Vous avez déjà un compte? <a href="sign-in.html">Se connecter</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts (Required Order) -->
+    <script src="../js/config.js"></script>
+    <script src="../js/core/StateManager.js"></script>
+    <script src="../js/core/ApiClient.js"></script>
+    <script src="../js/core/WebSocketClient.js"></script>
+    <script src="../js/init.js"></script>
+
+    <!-- Services -->
+    <script src="../js/services/AuthService.js"></script>
+    <script src="../js/services/EstablishmentService.js"></script>
+    <script src="../js/services/QueueService.js"></script>
+    <script src="../js/services/TicketService.js"></script>
+    <script src="../js/services/StatsService.js"></script>
+    <script src="../js/services/RealtimeService.js"></script>
+
+    <!-- Utilities -->
+    <script src="../js/utils.js"></script>
+
+    <!-- Page-Specific Script -->
+    <script src="../js/pages/enterprise/signup.js"></script>
+
+<script src="../js/pages.js"></script>
+<script src="../js/components/dynamic-menu.js"></script>
+</body>
+</html>
+
+

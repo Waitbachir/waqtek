@@ -1,0 +1,36 @@
+{
+  "name": "waqtek",
+  "type": "module",
+  "scripts": {
+    "start": "node backend/start.js",
+    "test": "c8 --reporter=text --reporter=lcov node --test tests/*.test.js",
+    "build": "npm run build:prod",
+    "build:prod": "npm run clean:dist && npm run build:frontend && npm run prune:dist && npm run prepare:server",
+    "build:frontend": "node scripts/build-frontend.mjs",
+    "clean:dist": "node scripts/clean-dist.mjs",
+    "prune:dist": "node scripts/prune-dist.mjs",
+    "prepare:server": "node scripts/prepare-server-dist.mjs"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.38.0",
+    "@supabase/supabase-js": "^2.39.7",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.4",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.1",
+    "git": "^0.1.5",
+    "helmet": "^8.0.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "redis": "^4.7.0",
+    "uuid": "^13.0.0",
+    "winston": "^3.14.2",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "c8": "^10.1.3",
+    "esbuild": "^0.25.11"
+  }
+}

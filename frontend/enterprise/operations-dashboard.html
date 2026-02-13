@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>WaQtek – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#0f172a",
+            accent: "#38bdf8"
+          }
+        }
+      }
+    }
+  </script>
+    <link rel="stylesheet" href="../css/responsive.css">
+    <link rel="stylesheet" href="../css/enterprise-menu.css">
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+
+<!-- 🔐 JWT PROTECTION -->
+<script>
+if (!localStorage.getItem("waqtek_token")) {
+  window.location.href = "sign-in.html";
+}
+</script>
+
+<div class="app-shell flex min-h-screen flex-col lg:flex-row">
+  <!-- MAIN CONTENT -->
+  <main class="app-main flex-1 overflow-y-auto p-4 lg:p-8">
+
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div>
+        <h2 class="text-3xl font-bold">Dashboard</h2>
+        <p class="text-sm text-slate-500">Vue globale de votre activité</p>
+      </div>
+      <div><button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition">Deconnexion</button></div>
+    </div>
+
+    <!-- STATS -->
+    <section id="dashboardStatsSection" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+
+      <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition">
+        <p class="text-sm text-slate-500">Établissements</p>
+        <p id="estCount" class="text-3xl font-bold mt-2">0</p>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition">
+        <p class="text-sm text-slate-500">Files d’attente</p>
+        <p id="queueCount" class="text-3xl font-bold mt-2">0</p>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition">
+        <p class="text-sm text-slate-500">Tickets aujourd’hui</p>
+        <p id="ticketCount" class="text-3xl font-bold mt-2">0</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-sky-500 to-blue-600 text-white rounded-xl p-6 shadow-lg">
+        <p class="text-sm opacity-90">Abonnement</p>
+        <p id="plan" class="text-2xl font-bold mt-2">—</p>
+      </div>
+
+    </section>
+
+    <!-- TABLE -->
+    <section>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">Derniers établissements</h3>
+      </div>
+
+      <div class="bg-white rounded-xl shadow overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-100 text-slate-600">
+            <tr>
+              <th class="px-6 py-4 text-left">Nom</th>
+              <th class="px-6 py-4 text-left">Adresse</th>
+              <th class="px-6 py-4 text-left">Créé le</th>
+            </tr>
+          </thead>
+          <tbody id="estTable" class="divide-y">
+            <tr>
+              <td colspan="3" class="px-6 py-6 text-center text-slate-400">
+                Chargement…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- SCRIPTS EXISTANTS (INCHANGÉS) -->
+<script src="../js/config.js"></script>
+<script src="../js/core/StateManager.js"></script>
+<script src="../js/core/ApiClient.js"></script>
+<script src="../js/core/WebSocketClient.js"></script>
+<script src="../js/core/lazy-loader.js"></script>
+<script src="../js/init.js"></script>
+
+<script src="../js/services/AuthService.js"></script>
+<script src="../js/services/EstablishmentService.js"></script>
+<script src="../js/services/QueueService.js"></script>
+<script src="../js/services/RealtimeService.js"></script>
+
+<script src="../js/utils.js"></script>
+<script>
+let dashboardStatsPromise = null;
+
+function ensureDashboardStatsLoaded() {
+  if (dashboardStatsPromise) return dashboardStatsPromise;
+  dashboardStatsPromise = window.lazyLoadFeature("dashboard-stats", [
+    "../js/services/StatsService.js",
+    "../js/pages/enterprise/dashboard.js"
+  ]);
+  return dashboardStatsPromise;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const statsSection = document.getElementById("dashboardStatsSection");
+
+  if ("IntersectionObserver" in window && statsSection) {
+    const observer = new IntersectionObserver((entries, obs) => {
+      const isVisible = entries.some((entry) => entry.isIntersecting);
+      if (isVisible) {
+        ensureDashboardStatsLoaded();
+        obs.disconnect();
+      }
+    }, { rootMargin: "80px" });
+
+    observer.observe(statsSection);
+  } else if ("requestIdleCallback" in window) {
+    requestIdleCallback(() => ensureDashboardStatsLoaded(), { timeout: 1000 });
+  } else {
+    setTimeout(() => ensureDashboardStatsLoaded(), 0);
+  }
+});
+</script>
+
+<script>
+async function logout() {
+  try {
+    if (window.AuthService && typeof AuthService.logout === 'function') {
+      await AuthService.logout();
+    } else {
+      localStorage.removeItem("waqtek_token");
+      localStorage.removeItem("waqtek_user");
+    }
+  } finally {
+    window.location.href = "sign-in.html";
+  }
+}
+</script>
+
+
+<script src="../js/enterprise-pages.js"></script>
+<script src="../js/components/enterprise-menu.js"></script>
+</body>
+</html>
+
+

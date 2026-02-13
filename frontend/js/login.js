@@ -95,8 +95,7 @@ async function handleLoginSubmit(e) {
 
         // Redirect to dashboard after short delay
         setTimeout(() => {
-            window.location.href = '/enterprise/operations-dashboard.html'
-';
+            window.location.href = '/enterprise/operations-dashboard.html';
         }, 800);
 
     } catch (error) {

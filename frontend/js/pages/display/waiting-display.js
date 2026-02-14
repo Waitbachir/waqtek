@@ -100,6 +100,18 @@ function escapeHtml(text = "") {
   return div.innerHTML;
 }
 
+function getVideoId(video) {
+  return String(video?.id || video?.video_id || video?.videoId || video?.uuid || "").trim();
+}
+
+function getVideoName(video) {
+  return String(video?.nom || video?.name || video?.title || "").trim();
+}
+
+function getVideoUrl(video) {
+  return String(video?.lien || video?.url || video?.link || "").trim();
+}
+
 function cacheKey(queueId) {
   return `${WAITING_CACHE_PREFIX}${queueId}`;
 }
@@ -407,15 +419,16 @@ async function loadSavedVideosForEst(estId) {
 
   select.disabled = false;
   select.innerHTML = '<option value="">Selectionner...</option>' + state.savedVideos.map((v) => {
-    const name = v.nom || v.name || `Video ${v.id || ""}`;
-    const id = v.id || "";
+    const id = getVideoId(v);
+    const name = getVideoName(v) || `Video ${id || ""}`;
     return `<option value="${escapeHtml(String(id))}">${escapeHtml(name)}</option>`;
   }).join("");
 
   if (state.adVideoUrl) {
-    const selected = state.savedVideos.find((v) => String(v.lien || v.url || "").trim() === state.adVideoUrl);
-    if (selected?.id) {
-      select.value = String(selected.id);
+    const selected = state.savedVideos.find((v) => getVideoUrl(v) === state.adVideoUrl);
+    const selectedId = getVideoId(selected);
+    if (selectedId) {
+      select.value = selectedId;
     }
   }
 }
@@ -893,11 +906,11 @@ function initEvents() {
     const selectedId = String(e.target.value || "").trim();
     if (!selectedId) return;
 
-    const selected = (state.savedVideos || []).find((v) => String(v.id || "") === selectedId);
+    const selected = (state.savedVideos || []).find((v) => getVideoId(v) === selectedId);
     if (!selected) return;
 
-    state.adVideoUrl = String(selected.lien || selected.url || "").trim();
-    state.adVideoName = String(selected?.nom || selected?.name || "").trim();
+    state.adVideoUrl = getVideoUrl(selected);
+    state.adVideoName = getVideoName(selected);
 
     const nameInput = document.getElementById("adVideoNameInput");
     const urlInput = document.getElementById("adVideoUrlInput");
@@ -932,8 +945,8 @@ function initEvents() {
         const videoService = await ensureVideoServiceLoaded();
         const video = await videoService.getVideoById(selectedSavedVideoId);
         if (video) {
-          state.adVideoName = String(video.nom || video.name || "").trim();
-          state.adVideoUrl = String(video.lien || video.url || "").trim();
+          state.adVideoName = getVideoName(video);
+          state.adVideoUrl = getVideoUrl(video);
           if (nameInput) nameInput.value = state.adVideoName;
           if (urlInput) urlInput.value = state.adVideoUrl;
         }

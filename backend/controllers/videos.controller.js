@@ -22,7 +22,7 @@ class VideosController {
             }
 
             const establishmentId = video.establishment_id || video.establishmentId;
-            if (!this.isAllowedTenant(req, establishmentId)) {
+            if (!VideosController.isAllowedTenant(req, establishmentId)) {
                 return res.status(403).json({ message: 'Acces refuse (tenant)', error: 'Acces refuse (tenant)' });
             }
 
@@ -40,7 +40,7 @@ class VideosController {
                 return res.status(400).json({ message: 'establishmentId manquant', error: 'establishmentId manquant' });
             }
 
-            if (!this.isAllowedTenant(req, establishmentId)) {
+            if (!VideosController.isAllowedTenant(req, establishmentId)) {
                 return res.status(403).json({ message: 'Acces refuse (tenant)', error: 'Acces refuse (tenant)' });
             }
 
@@ -65,7 +65,7 @@ class VideosController {
                 });
             }
 
-            if (!this.isAllowedTenant(req, establishmentId)) {
+            if (!VideosController.isAllowedTenant(req, establishmentId)) {
                 return res.status(403).json({ message: 'Acces refuse (tenant)', error: 'Acces refuse (tenant)' });
             }
 

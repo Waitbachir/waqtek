@@ -81,6 +81,7 @@
     const currentPaddingTop = parseFloat(computed.paddingTop || "0") || 0;
     const menuHeight = root.getBoundingClientRect().height || 56;
     document.body.style.paddingTop = `${currentPaddingTop + menuHeight}px`;
+    document.documentElement.style.setProperty("--enterprise-menu-offset", `${menuHeight}px`);
   }
 
   if (document.readyState === "loading") {

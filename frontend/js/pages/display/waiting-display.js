@@ -382,7 +382,7 @@ async function loadSavedVideosForEst(estId) {
   if (!estId) {
     state.savedVideos = [];
     select.disabled = true;
-    select.innerHTML = '<option value="">Selectionner...</option>';
+    select.innerHTML = '<option value="">Selectionner un etablissement d\'abord...</option>';
     return;
   }
 
@@ -393,9 +393,19 @@ async function loadSavedVideosForEst(estId) {
   } catch (error) {
     console.error("[DISPLAY] Load videos error:", error);
     state.savedVideos = [];
+    select.disabled = true;
+    select.innerHTML = '<option value="">Erreur chargement videos</option>';
+    showToast("Impossible de charger les videos enregistrees", "error");
+    return;
   }
 
-  select.disabled = state.savedVideos.length === 0;
+  if (state.savedVideos.length === 0) {
+    select.disabled = true;
+    select.innerHTML = '<option value="">Aucune video enregistree</option>';
+    return;
+  }
+
+  select.disabled = false;
   select.innerHTML = '<option value="">Selectionner...</option>' + state.savedVideos.map((v) => {
     const name = v.nom || v.name || `Video ${v.id || ""}`;
     const id = v.id || "";
@@ -822,8 +832,14 @@ async function loadQueuesForEst(estId) {
     return;
   }
 
-  const queues = await QueueService.getQueuesByEstablishment(estId);
-  state.queues = queues || [];
+  try {
+    const queues = await QueueService.getQueuesByEstablishment(estId);
+    state.queues = queues || [];
+  } catch (error) {
+    console.error("[DISPLAY] Load queues error:", error);
+    state.queues = [];
+    showToast("Impossible de charger les files d'attente", "error");
+  }
 
   select.innerHTML = '<option value="">Selectionner...</option><option value="__ALL__">Toutes les files</option>' + state.queues.map((q) => `<option value="${q.id}">${escapeHtml(q.name)}</option>`).join("");
 
@@ -836,11 +852,15 @@ async function loadQueuesForEst(estId) {
   await loadSavedVideosForEst(estId);
 }
 
-function openSettings() {
+async function openSettings() {
   const panel = document.getElementById("settingsPanel");
   if (!panel) return;
   panel.classList.remove("hidden");
   panel.classList.add("flex");
+
+  if (state.selectedEst) {
+    await loadSavedVideosForEst(state.selectedEst);
+  }
 }
 
 function closeSettings() {
@@ -851,7 +871,9 @@ function closeSettings() {
 }
 
 function initEvents() {
-  document.getElementById("settingsBtn").onclick = openSettings;
+  document.getElementById("settingsBtn").onclick = () => {
+    openSettings();
+  };
   document.getElementById("closeSettings").onclick = closeSettings;
 
   document.getElementById("estSelect").onchange = async (e) => {

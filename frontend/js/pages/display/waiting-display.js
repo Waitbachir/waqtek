@@ -783,10 +783,31 @@ function enableAudioOnFirstGesture() {
 
 async function loadOptions() {
   const ests = await EstablishmentService.getEstablishments();
-  state.establishments = ests || [];
+  const filtered = EstablishmentService.filterByCurrentUser(ests);
+  state.establishments = Array.isArray(filtered) && filtered.length > 0
+    ? filtered
+    : (Array.isArray(ests) ? ests : []);
+
   const estSelect = document.getElementById("estSelect");
   estSelect.innerHTML = '<option value="">Selectionner...</option>' + state.establishments.map((e) => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join("");
-  if (state.selectedEst) estSelect.value = state.selectedEst;
+
+  if (!state.establishments.length) {
+    state.selectedEst = null;
+    state.selectedQueue = null;
+    state.allQueuesMode = false;
+    await loadQueuesForEst(null);
+    return;
+  }
+
+  const selectedExists = state.selectedEst && state.establishments.some((e) => e.id === state.selectedEst);
+  if (!selectedExists) {
+    state.selectedEst = state.establishments[0]?.id || null;
+  }
+
+  if (state.selectedEst) {
+    estSelect.value = state.selectedEst;
+  }
+
   await loadQueuesForEst(state.selectedEst);
 }
 

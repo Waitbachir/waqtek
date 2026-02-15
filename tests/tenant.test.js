@@ -8,6 +8,7 @@ const { validateTenant } = await import('../backend/middlewares/validateTenant.j
 const Establishment = (await import('../backend/models/establishment.model.js')).default;
 const Queue = (await import('../backend/models/queue.model.js')).default;
 const Ticket = (await import('../backend/models/ticket.model.js')).default;
+const EstablishmentsController = (await import('../backend/controllers/establishments.controller.js')).default;
 const QueuesController = (await import('../backend/controllers/queues.controller.js')).default;
 const TicketsController = (await import('../backend/controllers/tickets.controller.js')).default;
 
@@ -67,6 +68,49 @@ test('validateTenant blocks mismatched establishment_id', async () => {
     assert.equal(nextCalled, false);
     assert.equal(res.statusCode, 403);
     assert.equal(res.payload.error, 'TENANT_MISMATCH');
+});
+
+test('validateTenant accepts linked user.id_etab even without manager_id ownership', async () => {
+    const est = await Establishment.create({ name: 'Linked Etab', manager_id: 'someone-else' });
+
+    const req = {
+        user: { id: 'manager-linked', role: 'manager', id_etab: est.id },
+        params: {},
+        query: {},
+        body: { establishment_id: est.id }
+    };
+    const res = createMockRes();
+
+    let nextCalled = false;
+    await validateTenant(req, res, () => {
+        nextCalled = true;
+    });
+
+    assert.equal(nextCalled, true);
+    assert.equal(res.statusCode, 200);
+    assert.ok(req.tenant.establishmentIds.includes(String(est.id)));
+});
+
+test('EstablishmentsController.getAll uses tenant scope ids', async () => {
+    const est1 = await Establishment.create({ name: 'Scope 1', manager_id: 'owner-scope-1' });
+    const est2 = await Establishment.create({ name: 'Scope 2', manager_id: 'owner-scope-2' });
+
+    const req = {
+        user: { id: 'manager-scope', role: 'manager' },
+        tenant: {
+            isAdmin: false,
+            establishmentIds: [String(est2.id)],
+            canAccessEstablishmentId: (id) => String(id) === String(est2.id)
+        }
+    };
+    const res = createMockRes();
+
+    await EstablishmentsController.getAll(req, res);
+    assert.equal(res.statusCode, 200);
+    const rows = res.payload?.establishments || [];
+    assert.equal(rows.length >= 1, true);
+    assert.equal(rows.every((r) => String(r.id) === String(est2.id)), true);
+    assert.equal(rows.some((r) => String(r.id) === String(est1.id)), false);
 });
 
 test('TicketsController.create blocks queue from another tenant', async () => {

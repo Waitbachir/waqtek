@@ -28,7 +28,9 @@ export async function requireAuth(req, res, next) {
       email: user.email,
       role: user.role,
       normalizedRole,
-      full_name: user.full_name || null
+      full_name: user.full_name || null,
+      id_etab: user.id_etab ?? null,
+      establishment_id: user.establishment_id ?? user.establishmentid ?? user.id_etab ?? null
     };
     req.permissions = getPermissionsForRole(normalizedRole);
     req.userRaw = user;

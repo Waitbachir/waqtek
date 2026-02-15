@@ -13,7 +13,9 @@ export async function register(email, password, role = "client") {
       id: created.id,
       email: created.email,
       role: created.role,
-      normalizedRole
+      normalizedRole,
+      id_etab: created.id_etab ?? null,
+      establishment_id: created.establishment_id ?? created.establishmentid ?? created.id_etab ?? null
     },
     permissions: getPermissionsForRole(normalizedRole)
   };
@@ -33,7 +35,9 @@ export async function login(email, password) {
       id: user.id,
       email: user.email,
       role: user.role,
-      normalizedRole
+      normalizedRole,
+      id_etab: user.id_etab ?? null,
+      establishment_id: user.establishment_id ?? user.establishmentid ?? user.id_etab ?? null
     },
     permissions: getPermissionsForRole(normalizedRole)
   };
@@ -52,7 +56,9 @@ export async function getAuthProfileByUserId(userId) {
       email: user.email,
       role: user.role,
       normalizedRole,
-      full_name: user.full_name || null
+      full_name: user.full_name || null,
+      id_etab: user.id_etab ?? null,
+      establishment_id: user.establishment_id ?? user.establishmentid ?? user.id_etab ?? null
     },
     permissions: getPermissionsForRole(normalizedRole)
   };

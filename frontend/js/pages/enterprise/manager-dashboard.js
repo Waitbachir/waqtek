@@ -141,9 +141,27 @@
     }
 
     async function loadContext() {
+        const profile = await AuthService.getMe().catch(() => ({}));
+        const user = profile?.user || state?.getUser?.() || {};
+        const userEmail = String(user?.email || "").toLowerCase();
+        const userEstId = user?.id_etab || user?.establishment_id || user?.establishmentId || user?.establishmentid || null;
+
         const establishments = await EstablishmentService.getEstablishments();
-        const scoped = EstablishmentService.filterByCurrentUser(establishments || []);
-        stateLocal.establishment = scoped[0] || null;
+        const list = Array.isArray(establishments) ? establishments : [];
+
+        const byIdEtab = userEstId
+            ? list.find((est) => String(est?.id) === String(userEstId))
+            : null;
+
+        const byManagerEmail = userEmail
+            ? list.find((est) => {
+                const managerEmail = String(est?.manager_email || est?.managerEmail || est?.owner_email || "").toLowerCase();
+                return managerEmail && managerEmail === userEmail;
+            })
+            : null;
+
+        const fallbackScoped = EstablishmentService.filterByCurrentUser(list);
+        stateLocal.establishment = byIdEtab || byManagerEmail || fallbackScoped[0] || list[0] || null;
         getEl("activeEst").textContent = stateLocal.establishment?.name || "Non configure";
         await loadQueues();
     }

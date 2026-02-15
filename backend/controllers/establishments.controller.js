@@ -38,10 +38,10 @@ class EstablishmentsController {
 
     static async getAll(req, res) {
         try {
-            const isAdmin = req.user?.role === 'admin';
+            const isAdmin = req.tenant?.isAdmin === true || req.user?.role === 'admin';
             const ests = isAdmin
                 ? await Establishment.getAll()
-                : await Establishment.getByManagerId(req.user.id);
+                : await Establishment.getByIds(req.tenant?.establishmentIds || []);
             return res.status(200).json({ establishments: ests });
         } catch (err) {
             return res.status(500).json({ error: err.message });

@@ -182,10 +182,16 @@ class EstablishmentService {
 
         const userId = user.id || user.user_id || user.userId || null;
         const userEmail = (user.email || '').toLowerCase();
+        const userEstId = user.id_etab || user.establishment_id || user.establishmentId || user.establishmentid || null;
 
         return list.filter((est) => {
             const managerId = est.manager_id || est.managerId || est.managerID || null;
             const managerEmail = (est.manager_email || est.managerEmail || est.owner_email || est.email || '').toLowerCase();
+            const estId = est.id || est.establishment_id || est.establishmentId || est.establishmentid || null;
+
+            if (userEstId && estId && String(userEstId) === String(estId)) {
+                return true;
+            }
 
             if (userId && managerId && managerId === userId) {
                 return true;

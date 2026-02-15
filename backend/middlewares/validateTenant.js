@@ -1,4 +1,4 @@
-import Establishment from '../models/establishment.model.js';
+﻿import Establishment from '../models/establishment.model.js';
 import { isAdminRole } from '../core/rbac.js';
 
 function toStringId(value) {
@@ -19,6 +19,25 @@ function extractRequestedEstablishmentIds(req) {
     ];
 
     return [...new Set(candidates.map(toStringId).filter(Boolean))];
+}
+
+function extractLinkedEstablishmentIdsFromUser(user) {
+    const raw = [
+        user?.id_etab,
+        user?.establishment_id,
+        user?.establishmentid,
+        user?.establishmentId
+    ];
+
+    const flattened = raw.flatMap((value) => {
+        if (Array.isArray(value)) return value;
+        if (typeof value === 'string' && value.includes(',')) {
+            return value.split(',').map((v) => v.trim());
+        }
+        return [value];
+    });
+
+    return [...new Set(flattened.map(toStringId).filter(Boolean))];
 }
 
 function canAccessEstablishmentId(tenant, establishmentId) {
@@ -57,9 +76,11 @@ export async function validateTenant(req, res, next) {
         }
 
         const establishments = await Establishment.getByManagerId(managerId);
-        const establishmentIds = (Array.isArray(establishments) ? establishments : [])
+        const managedIds = (Array.isArray(establishments) ? establishments : [])
             .map((est) => toStringId(est.id))
             .filter(Boolean);
+        const linkedIds = extractLinkedEstablishmentIdsFromUser(req.user);
+        const establishmentIds = [...new Set([...managedIds, ...linkedIds])];
 
         const tenant = { isAdmin: false, establishmentIds };
         req.tenant = {
@@ -74,7 +95,7 @@ export async function validateTenant(req, res, next) {
         if (hasTenantMismatch) {
             return res.status(403).json({
                 error: 'TENANT_MISMATCH',
-                message: 'Cet �tablissement n\'appartient pas au tenant authentifie'
+                message: 'Cet établissement n\'appartient pas au tenant authentifie'
             });
         }
 
@@ -86,4 +107,3 @@ export async function validateTenant(req, res, next) {
         });
     }
 }
-

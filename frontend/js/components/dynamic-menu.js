@@ -5,16 +5,49 @@
 
   const PAGES = window.APP_PAGES;
 
-  function inferRole() {
+  function normalizeRole(role) {
+    const raw = String(role || "").trim().toUpperCase();
+    if (!raw) return "PUBLIC";
+    if (raw === "ENTERPRISE") return "MANAGER";
+    return raw;
+  }
+
+  function isAuthenticated() {
     try {
-      const raw = localStorage.getItem("waqtek_user");
-      if (!raw) return "public";
-      const user = JSON.parse(raw);
-      const role = String(user?.role || "").toLowerCase();
-      if (role === "admin" || role === "manager" || role === "enterprise") return "manager";
-      return "public";
+      return !!window.state?.getToken?.();
     } catch (_) {
-      return "public";
+      return false;
+    }
+  }
+
+  function getRoleFromLocalState() {
+    try {
+      const fromState = window.state?.getUser?.();
+      if (fromState?.normalizedRole || fromState?.role) {
+        return normalizeRole(fromState.normalizedRole || fromState.role);
+      }
+      const raw = localStorage.getItem("waqtek_user");
+      if (!raw) return "PUBLIC";
+      const user = JSON.parse(raw);
+      return normalizeRole(user?.normalizedRole || user?.role);
+    } catch (_) {
+      return "PUBLIC";
+    }
+  }
+
+  async function resolveCurrentRole() {
+    if (!isAuthenticated()) {
+      return "PUBLIC";
+    }
+
+    try {
+      const profile = await window.api?.getAuthMe?.();
+      if (profile?.user) {
+        window.state?.setUser?.(profile.user);
+      }
+      return normalizeRole(profile?.user?.normalizedRole || profile?.user?.role);
+    } catch (_) {
+      return getRoleFromLocalState();
     }
   }
 
@@ -42,12 +75,14 @@
     }
   }
 
-  function filterPagesForMenu() {
-    const role = inferRole();
-    if (role === "manager") {
-      return PAGES.filter((p) => p.role !== "display");
-    }
-    return PAGES.filter((p) => p.role === "public" || p.role === "display");
+  function hasRoleAccess(page, role) {
+    const allowed = Array.isArray(page.allowedRoles) ? page.allowedRoles : [];
+    if (!allowed.length) return role === "PUBLIC";
+    return allowed.map(normalizeRole).includes(normalizeRole(role));
+  }
+
+  function filterPagesForMenu(role) {
+    return PAGES.filter((page) => hasRoleAccess(page, role));
   }
 
   function injectStyles() {
@@ -144,8 +179,9 @@
     document.head.appendChild(style);
   }
 
-  function mountMenu() {
+  async function mountMenu() {
     injectStyles();
+    const role = await resolveCurrentRole();
 
     const toggle = document.createElement("button");
     toggle.className = "app-dm-toggle";
@@ -168,7 +204,7 @@
     const list = panel.querySelector(".app-dm-list");
     const currentUrl = window.location.href;
 
-    filterPagesForMenu().forEach((page) => {
+    filterPagesForMenu(role).forEach((page) => {
       const href = resolvePageUrl(page.path);
       const li = document.createElement("li");
       li.className = "app-dm-item";
@@ -179,6 +215,8 @@
       }
       list.appendChild(li);
     });
+
+    if (!list.children.length) return;
 
     function open() {
       overlay.classList.add("open");

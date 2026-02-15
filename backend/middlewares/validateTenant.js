@@ -1,4 +1,5 @@
-﻿import Establishment from '../models/establishment.model.js';
+import Establishment from '../models/establishment.model.js';
+import { isAdminRole } from '../core/rbac.js';
 
 function toStringId(value) {
     if (value === null || typeof value === 'undefined') return null;
@@ -39,7 +40,7 @@ function filterRowsByEstablishment(tenant, rows = [], resolver) {
 
 export async function validateTenant(req, res, next) {
     try {
-        const isAdmin = req.user?.role === 'admin';
+        const isAdmin = isAdminRole(req.user?.normalizedRole || req.user?.role);
         if (isAdmin) {
             const tenant = { isAdmin: true, establishmentIds: [] };
             req.tenant = {
@@ -73,7 +74,7 @@ export async function validateTenant(req, res, next) {
         if (hasTenantMismatch) {
             return res.status(403).json({
                 error: 'TENANT_MISMATCH',
-                message: 'Cet établissement n\'appartient pas au tenant authentifie'
+                message: 'Cet �tablissement n\'appartient pas au tenant authentifie'
             });
         }
 
@@ -85,3 +86,4 @@ export async function validateTenant(req, res, next) {
         });
     }
 }
+

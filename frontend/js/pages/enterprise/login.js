@@ -10,7 +10,65 @@
 
 function getRedirectTarget() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('redirect') || 'operations-dashboard.html';
+    return params.get('redirect');
+}
+
+function normalizeRole(role) {
+    const raw = String(role || '').trim().toUpperCase();
+    if (!raw) return 'PUBLIC';
+    if (raw === 'ENTERPRISE') return 'MANAGER';
+    return raw;
+}
+
+function getDefaultHomeForRole(role) {
+    const normalized = normalizeRole(role);
+    if (normalized === 'WAQTEK_TEAM') return 'queue-overview.html';
+    return 'operations-dashboard.html';
+}
+
+function getAllowedRolesForPage(pageName) {
+    const rules = {
+        'operations-dashboard.html': ['ADMIN', 'MANAGER', 'WAQTEK_TEAM'],
+        'analytics-dashboard.html': ['ADMIN', 'WAQTEK_TEAM'],
+        'establishments-management.html': ['ADMIN', 'WAQTEK_TEAM'],
+        'queue-overview.html': ['ADMIN', 'MANAGER', 'WAQTEK_TEAM'],
+        'subscription-management.html': ['ADMIN', 'WAQTEK_TEAM'],
+        'ticket-management.html': ['ADMIN', 'MANAGER'],
+        'pos-ticket.html': ['ADMIN', 'MANAGER'],
+        'take-ticket.html': ['ADMIN', 'MANAGER'],
+        'queue-display.html': ['ADMIN', 'MANAGER'],
+        'queue-display-setup.html': ['ADMIN', 'MANAGER'],
+        'queue-display-control.html': ['ADMIN', 'MANAGER']
+    };
+    return rules[pageName] || [];
+}
+
+function extractPageNameFromRedirect(redirectTarget) {
+    if (!redirectTarget) return null;
+    try {
+        const resolved = new URL(redirectTarget, window.location.origin);
+        if (resolved.origin !== window.location.origin) return null;
+        return resolved.pathname.split('/').pop() || null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function resolveRedirectTargetForRole(role) {
+    const redirectTarget = getRedirectTarget();
+    const pageName = extractPageNameFromRedirect(redirectTarget);
+    const normalizedRole = normalizeRole(role);
+
+    if (!redirectTarget || !pageName) {
+        return getDefaultHomeForRole(normalizedRole);
+    }
+
+    const allowedRoles = getAllowedRolesForPage(pageName);
+    if (!allowedRoles.length || allowedRoles.includes(normalizedRole)) {
+        return redirectTarget;
+    }
+
+    return getDefaultHomeForRole(normalizedRole);
 }
 
 // ===== FORM HANDLING =====
@@ -40,6 +98,9 @@ async function handleLoginSubmit(event) {
     try {
         // Call AuthService
         const result = await AuthService.login(email, password);
+        const profile = await AuthService.getMe();
+        const role = profile?.user?.normalizedRole || profile?.user?.role || result?.user?.normalizedRole || result?.user?.role;
+        const redirectTarget = resolveRedirectTargetForRole(role);
 
         if (state.getToken() || (result && result.token)) {
             // Store "remember me" preference
@@ -52,7 +113,7 @@ async function handleLoginSubmit(event) {
 
             // Redirect after 1 second (supports ?redirect=...)
             setTimeout(() => {
-                window.location.href = getRedirectTarget();
+                window.location.href = redirectTarget;
             }, 1000);
         } else {
             showErrorAlert(result.message || 'Erreur lors de la connexion');
@@ -88,12 +149,18 @@ function showSuccessAlert(message) {
 }
 
 // ===== PAGE INITIALIZATION =====
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('[LOGIN] Page loaded');
 
     // If already logged in, redirect immediately
     if (state.getToken()) {
-        window.location.href = getRedirectTarget();
+        try {
+            const profile = await AuthService.getMe();
+            const role = profile?.user?.normalizedRole || profile?.user?.role;
+            window.location.href = resolveRedirectTargetForRole(role);
+        } catch (_) {
+            window.location.href = getDefaultHomeForRole('MANAGER');
+        }
         return;
     }
 

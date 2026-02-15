@@ -6,6 +6,7 @@
       menuLabel: "Sign In",
       path: "enterprise/sign-in.html",
       role: "public",
+      allowedRoles: ["PUBLIC"],
       section: "auth",
     },
     {
@@ -14,6 +15,7 @@
       menuLabel: "Create Account",
       path: "enterprise/sign-up.html",
       role: "public",
+      allowedRoles: ["PUBLIC", "WAQTEK_TEAM"],
       section: "auth",
     },
     {
@@ -22,6 +24,7 @@
       menuLabel: "Operations Dashboard",
       path: "enterprise/operations-dashboard.html",
       role: "manager",
+      allowedRoles: ["ADMIN", "MANAGER", "WAQTEK_TEAM"],
       section: "enterprise",
     },
     {
@@ -30,6 +33,7 @@
       menuLabel: "Establishments",
       path: "enterprise/establishments-management.html",
       role: "manager",
+      allowedRoles: ["ADMIN", "WAQTEK_TEAM"],
       section: "enterprise",
     },
     {
@@ -38,6 +42,7 @@
       menuLabel: "Queue Management",
       path: "enterprise/queue-management.html",
       role: "manager",
+      allowedRoles: ["ADMIN", "MANAGER"],
       section: "enterprise",
     },
     {
@@ -46,6 +51,7 @@
       menuLabel: "Ticket Management",
       path: "enterprise/ticket-management.html",
       role: "manager",
+      allowedRoles: ["ADMIN", "MANAGER"],
       section: "enterprise",
     },
     {
@@ -54,6 +60,7 @@
       menuLabel: "Analytics",
       path: "enterprise/analytics-dashboard.html",
       role: "manager",
+      allowedRoles: ["ADMIN", "WAQTEK_TEAM"],
       section: "enterprise",
     },
     {
@@ -62,6 +69,7 @@
       menuLabel: "Queue Overview",
       path: "enterprise/queue-overview.html",
       role: "manager",
+      allowedRoles: ["ADMIN", "MANAGER", "WAQTEK_TEAM"],
       section: "enterprise",
     },
     {
@@ -70,6 +78,7 @@
       menuLabel: "Subscriptions",
       path: "enterprise/subscription-management.html",
       role: "manager",
+      allowedRoles: ["ADMIN", "WAQTEK_TEAM"],
       section: "enterprise",
     },
     {
@@ -78,6 +87,7 @@
       menuLabel: "Queue Display",
       path: "queue-display.html",
       role: "display",
+      allowedRoles: ["ADMIN", "MANAGER"],
       section: "display",
     },
     {
@@ -86,6 +96,7 @@
       menuLabel: "Display Setup",
       path: "queue-display-setup.html",
       role: "display",
+      allowedRoles: ["ADMIN", "MANAGER"],
       section: "display",
     },
     {
@@ -94,6 +105,7 @@
       menuLabel: "Display Control",
       path: "queue-display-control.html",
       role: "display",
+      allowedRoles: ["ADMIN", "MANAGER"],
       section: "display",
     },
     {
@@ -102,6 +114,7 @@
       menuLabel: "Ticket Kiosk",
       path: "client/ticket-kiosk.html",
       role: "public",
+      allowedRoles: ["PUBLIC"],
       section: "client",
     },
     {
@@ -110,6 +123,7 @@
       menuLabel: "Waiting Board",
       path: "client/waiting-board.html",
       role: "public",
+      allowedRoles: ["PUBLIC"],
       section: "client",
     },
     {
@@ -118,6 +132,16 @@
       menuLabel: "POS Ticket",
       path: "client/pos-ticket.html",
       role: "public",
+      allowedRoles: ["ADMIN", "MANAGER"],
+      section: "client",
+    },
+    {
+      id: "take_ticket",
+      technicalName: "take-ticket",
+      menuLabel: "Prendre un ticket",
+      path: "client/take-ticket.html",
+      role: "public",
+      allowedRoles: ["ADMIN", "MANAGER"],
       section: "client",
     },
     {
@@ -126,6 +150,7 @@
       menuLabel: "Payment Pending",
       path: "client/payment-pending.html",
       role: "public",
+      allowedRoles: ["PUBLIC"],
       section: "client",
     },
     {
@@ -134,6 +159,7 @@
       menuLabel: "Remote Tracking",
       path: "client/remote-tracking.html",
       role: "public",
+      allowedRoles: ["PUBLIC"],
       section: "client",
     },
     {
@@ -142,6 +168,7 @@
       menuLabel: "Notifications",
       path: "client/client-notifications.html",
       role: "public",
+      allowedRoles: ["PUBLIC"],
       section: "client",
     },
   ];

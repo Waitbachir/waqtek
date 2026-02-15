@@ -5,6 +5,58 @@
   const pages = Array.isArray(window.ENTERPRISE_PAGES) ? window.ENTERPRISE_PAGES : [];
   if (!pages.length) return;
 
+  function normalizeRole(role) {
+    const raw = String(role || "").trim().toUpperCase();
+    if (!raw) return "PUBLIC";
+    if (raw === "ENTERPRISE") return "MANAGER";
+    return raw;
+  }
+
+  function isAuthenticated() {
+    try {
+      return !!window.state?.getToken?.();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function getRoleFromLocalState() {
+    try {
+      const fromState = window.state?.getUser?.();
+      if (fromState?.normalizedRole || fromState?.role) {
+        return normalizeRole(fromState.normalizedRole || fromState.role);
+      }
+      const raw = localStorage.getItem("waqtek_user");
+      if (!raw) return "PUBLIC";
+      const user = JSON.parse(raw);
+      return normalizeRole(user?.normalizedRole || user?.role);
+    } catch (_) {
+      return "PUBLIC";
+    }
+  }
+
+  async function resolveCurrentRole() {
+    if (!isAuthenticated()) {
+      return "PUBLIC";
+    }
+
+    try {
+      const profile = await window.api?.getAuthMe?.();
+      if (profile?.user) {
+        window.state?.setUser?.(profile.user);
+      }
+      return normalizeRole(profile?.user?.normalizedRole || profile?.user?.role);
+    } catch (_) {
+      return getRoleFromLocalState();
+    }
+  }
+
+  function hasRoleAccess(page, role) {
+    const allowed = Array.isArray(page.allowedRoles) ? page.allowedRoles : [];
+    if (!allowed.length) return role === "PUBLIC";
+    return allowed.map(normalizeRole).includes(normalizeRole(role));
+  }
+
   function getFrontendBaseUrl() {
     const marker = "/frontend/";
     const href = window.location.href;
@@ -29,7 +81,11 @@
     }
   }
 
-  function buildMenu() {
+  async function buildMenu() {
+    const role = await resolveCurrentRole();
+    const filteredPages = pages.filter((page) => hasRoleAccess(page, role));
+    if (!filteredPages.length) return;
+
     const root = document.createElement("nav");
     root.className = "enterprise-menu-root";
     root.setAttribute("aria-label", "Enterprise Navigation");
@@ -51,7 +107,7 @@
     links.className = "enterprise-menu-links";
 
     const currentUrl = window.location.href;
-    pages.forEach((page) => {
+    filteredPages.forEach((page) => {
       const li = document.createElement("li");
       const link = document.createElement("a");
       const href = resolvePageUrl(page.path);

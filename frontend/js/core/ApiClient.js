@@ -131,6 +131,10 @@ class ApiClient {
         });
     }
 
+    async getAuthMe() {
+        return this.request('/auth/me');
+    }
+
     // ============================================
     // ESTABLISHMENTS ENDPOINTS
     // ============================================

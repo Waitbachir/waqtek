@@ -5,6 +5,7 @@ import { validateTenant } from "../middlewares/validateTenant.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 import { schemas } from "../core/validation.schemas.js";
 import { cacheResponse } from "../middlewares/cache.middleware.js";
+import { requirePermission } from "../middlewares/permissions.middleware.js";
 import {
   ticketsListCacheKey,
   ticketsByQueueCacheKey,
@@ -24,11 +25,31 @@ router.get('/public/position/:ticketId', TicketsController.getPublicPosition);
 
 router.use(requireAuth, validateTenant);
 
-router.post('/', validateRequest(schemas.ticketCreate), TicketsController.create);
-router.get('/', cacheResponse({ ttlSeconds: ticketsCacheTtl, keyBuilder: ticketsListCacheKey }), TicketsController.getAll);
-router.get('/queue/:queueId', cacheResponse({ ttlSeconds: ticketsCacheTtl, keyBuilder: ticketsByQueueCacheKey }), TicketsController.getByQueue);
-router.get('/:id', cacheResponse({ ttlSeconds: ticketsCacheTtl, keyBuilder: ticketByIdCacheKey }), TicketsController.getById);
-router.put('/:id/status', validateRequest(schemas.ticketStatusUpdate), TicketsController.updateStatus);
-router.delete('/:id', TicketsController.delete);
+router.post('/', requirePermission('tickets:create'), validateRequest(schemas.ticketCreate), TicketsController.create);
+router.get(
+  '/',
+  requirePermission('tickets:read'),
+  cacheResponse({ ttlSeconds: ticketsCacheTtl, keyBuilder: ticketsListCacheKey }),
+  TicketsController.getAll
+);
+router.get(
+  '/queue/:queueId',
+  requirePermission('tickets:read'),
+  cacheResponse({ ttlSeconds: ticketsCacheTtl, keyBuilder: ticketsByQueueCacheKey }),
+  TicketsController.getByQueue
+);
+router.get(
+  '/:id',
+  requirePermission('tickets:read'),
+  cacheResponse({ ttlSeconds: ticketsCacheTtl, keyBuilder: ticketByIdCacheKey }),
+  TicketsController.getById
+);
+router.put(
+  '/:id/status',
+  requirePermission('tickets:update'),
+  validateRequest(schemas.ticketStatusUpdate),
+  TicketsController.updateStatus
+);
+router.delete('/:id', requirePermission('tickets:delete', 'tickets:update'), TicketsController.delete);
 
 export default router;

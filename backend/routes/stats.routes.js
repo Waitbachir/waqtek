@@ -5,6 +5,7 @@ import { validateTenant } from "../middlewares/validateTenant.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 import { schemas } from "../core/validation.schemas.js";
 import { cacheResponse } from '../middlewares/cache.middleware.js';
+import { requirePermission } from "../middlewares/permissions.middleware.js";
 import {
     dailyStatsCacheKey,
     monthlyStatsCacheKey,
@@ -17,7 +18,7 @@ import {
 const router = express.Router();
 const statsCacheTtl = Number(process.env.CACHE_TTL_STATS_SEC || 300);
 
-router.use(requireAuth, validateTenant);
+router.use(requireAuth, validateTenant, requirePermission('stats:read'));
 
 router.get(
     '/revenue/daily',

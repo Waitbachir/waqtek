@@ -4,6 +4,21 @@
  */
 
 class AuthService {
+    static normalizeRole(role) {
+        const raw = String(role || '').trim().toUpperCase();
+        if (!raw) return 'PUBLIC';
+        if (raw === 'ENTERPRISE') return 'MANAGER';
+        return raw;
+    }
+
+    static async getMe() {
+        const response = await apiClient.getAuthMe();
+        if (response?.user) {
+            stateManager.setUser(response.user);
+        }
+        return response;
+    }
+
     /**
      * Connexion
      */
@@ -123,7 +138,7 @@ class AuthService {
 
             // Essayer de rafraîchir depuis le serveur
             try {
-                const response = await apiClient.getCurrentUser();
+                const response = await this.getMe();
                 if (response.user) {
                     stateManager.setUser(response.user);
                     return response.user;

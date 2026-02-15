@@ -16,9 +16,24 @@ const strengthDiv = document.getElementById('strengthDiv');
 const strengthText = document.getElementById('strengthText');
 const strengthBar = document.getElementById('strengthBar');
 
+function normalizeRole(role) {
+    const raw = String(role || '').trim().toUpperCase();
+    if (!raw) return 'PUBLIC';
+    if (raw === 'ENTERPRISE') return 'MANAGER';
+    return raw;
+}
+
+function getDefaultHomeForRole(role) {
+    const normalized = normalizeRole(role);
+    if (normalized === 'WAQTEK_TEAM') return 'queue-overview.html';
+    return 'operations-dashboard.html';
+}
+
 // Check if user already logged in
 if (window.state && window.state.getToken()) {
-    window.location.href = 'operations-dashboard.html';
+    const currentUser = window.state.getUser && window.state.getUser();
+    const currentRole = currentUser?.normalizedRole || currentUser?.role;
+    window.location.href = getDefaultHomeForRole(currentRole);
 }
 
 /**
@@ -205,8 +220,11 @@ async function handleSignupSubmit(event) {
         showSuccess('✅ Inscription réussie! Bienvenue sur WaQtek.');
 
         // Redirect to dashboard after 2 seconds
+        const profile = await window.AuthService.getMe();
+        const role = profile?.user?.normalizedRole || profile?.user?.role || userData.role;
+        const redirectTarget = getDefaultHomeForRole(role);
         setTimeout(() => {
-            window.location.href = 'operations-dashboard.html';
+            window.location.href = redirectTarget;
         }, 2000);
 
     } catch (error) {

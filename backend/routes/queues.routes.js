@@ -6,6 +6,7 @@ import { validateRequest } from "../middlewares/validateRequest.js";
 import { schemas } from "../core/validation.schemas.js";
 import Queue from '../models/queue.model.js';
 import { cacheResponse } from '../middlewares/cache.middleware.js';
+import { requirePermission } from "../middlewares/permissions.middleware.js";
 import {
     activeQueuesCacheKey,
     queuesByEstablishmentCacheKey,
@@ -35,16 +36,22 @@ router.get('/:id/public', async (req, res) => {
 
 router.use(requireAuth, validateTenant);
 
-router.post('/', validateRequest(schemas.queueCreate), QueuesController.create);
-router.get('/', QueuesController.getAll);
-router.get('/active', cacheResponse({ ttlSeconds: queueActiveCacheTtl, keyBuilder: activeQueuesCacheKey }), QueuesController.getActive);
+router.post('/', requirePermission('queues:write'), validateRequest(schemas.queueCreate), QueuesController.create);
+router.get('/', requirePermission('queues:read'), QueuesController.getAll);
+router.get(
+    '/active',
+    requirePermission('queues:read'),
+    cacheResponse({ ttlSeconds: queueActiveCacheTtl, keyBuilder: activeQueuesCacheKey }),
+    QueuesController.getActive
+);
 router.get(
     '/establishment/:estId',
+    requirePermission('queues:read'),
     cacheResponse({ ttlSeconds: queueHeavyCacheTtl, keyBuilder: queuesByEstablishmentCacheKey }),
     QueuesController.getByEstablishment
 );
-router.get('/:id', QueuesController.getById);
-router.put('/:id', QueuesController.update);
-router.delete('/:id', QueuesController.delete);
+router.get('/:id', requirePermission('queues:read'), QueuesController.getById);
+router.put('/:id', requirePermission('queues:write'), QueuesController.update);
+router.delete('/:id', requirePermission('queues:delete', 'queues:write'), QueuesController.delete);
 
 export default router;

@@ -1,78 +1,170 @@
 /**
- * init.js - Initialisation globale de l'application WaQtek
- * À charger en premier dans toutes les pages HTML
+ * init.js - Global bootstrap and route guard.
  */
 
-console.log('🚀 WAQTEK FRONTEND - INITIALIZATION');
+console.log('[WAQTEK] FRONTEND INITIALIZATION');
 
-/**
- * Initialiser l'application
- */
-async function initializeApp() {
-    console.group('⚙️ INITIALISATION');
+const ROUTE_GUARD_PUBLIC_PAGES = new Set([
+    'sign-in.html',
+    'sign-in-modern.html',
+    'sign-up.html',
+    'payment-pending.html',
+    'remote-tracking.html'
+]);
+
+const ROUTE_GUARD_PROTECTED_PAGES = {
+    'operations-dashboard.html': ['ADMIN', 'MANAGER', 'WAQTEK_TEAM'],
+    'analytics-dashboard.html': ['ADMIN', 'WAQTEK_TEAM'],
+    'establishments-management.html': ['ADMIN', 'WAQTEK_TEAM'],
+    'queue-overview.html': ['ADMIN', 'WAQTEK_TEAM', 'MANAGER'],
+    'subscription-management.html': ['ADMIN', 'WAQTEK_TEAM'],
+    'ticket-management.html': ['ADMIN', 'MANAGER'],
+    'pos-ticket.html': ['ADMIN', 'MANAGER'],
+    'take-ticket.html': ['ADMIN', 'MANAGER'],
+    'queue-display.html': ['ADMIN', 'MANAGER'],
+    'queue-display-setup.html': ['ADMIN', 'MANAGER'],
+    'queue-display-control.html': ['ADMIN', 'MANAGER']
+};
+
+function getCurrentPageName() {
+    return window.location.pathname.split('/').pop() || 'index.html';
+}
+
+function isEnterprisePagePath() {
+    return window.location.pathname.includes('/enterprise/');
+}
+
+function getSignInUrl() {
+    if (window.location.pathname.includes('/enterprise/')) return 'sign-in.html';
+    if (window.location.pathname.includes('/client/')) return '../enterprise/sign-in.html';
+    return './enterprise/sign-in.html';
+}
+
+function normalizeRole(role) {
+    const raw = String(role || '').trim().toUpperCase();
+    if (!raw) return 'PUBLIC';
+    if (raw === 'ENTERPRISE') return 'MANAGER';
+    return raw;
+}
+
+function getDefaultHomeForRole(role) {
+    const normalized = normalizeRole(role);
+    if (normalized === 'WAQTEK_TEAM') return 'queue-overview.html';
+    return 'operations-dashboard.html';
+}
+
+function buildRedirectParam() {
+    return `${window.location.pathname}${window.location.search || ''}`;
+}
+
+function clearAuthState() {
+    try {
+        stateManager.reset();
+    } catch (_) {
+        localStorage.removeItem(CONFIG.STORAGE.TOKEN_KEY);
+        localStorage.removeItem(CONFIG.STORAGE.USER_KEY);
+    }
+}
+
+function redirectToSignIn() {
+    const signInUrl = getSignInUrl();
+    const redirect = encodeURIComponent(buildRedirectParam());
+    window.location.href = `${signInUrl}?redirect=${redirect}`;
+}
+
+function isProtectedPage(pageName) {
+    if (ROUTE_GUARD_PROTECTED_PAGES[pageName]) return true;
+    if (isEnterprisePagePath() && !ROUTE_GUARD_PUBLIC_PAGES.has(pageName)) return true;
+    return false;
+}
+
+function getAllowedRolesForPage(pageName) {
+    if (ROUTE_GUARD_PROTECTED_PAGES[pageName]) {
+        return ROUTE_GUARD_PROTECTED_PAGES[pageName];
+    }
+    if (isEnterprisePagePath() && !ROUTE_GUARD_PUBLIC_PAGES.has(pageName)) {
+        return ['ADMIN', 'MANAGER', 'WAQTEK_TEAM'];
+    }
+    return [];
+}
+
+async function enforceRouteGuard() {
+    const pageName = getCurrentPageName();
+    if (!isProtectedPage(pageName)) return true;
+
+    if (!stateManager.isAuthenticated()) {
+        redirectToSignIn();
+        return false;
+    }
 
     try {
-        // 1. Vérifier la config
-        console.log('✅ Config chargée:', CONFIG.API.BASE_URL);
+        const profile = await apiClient.getAuthMe();
+        const role = normalizeRole(profile?.user?.normalizedRole || profile?.user?.role);
+        const allowedRoles = getAllowedRolesForPage(pageName);
 
-        // 2. Initialiser StateManager
-        console.log('✅ StateManager créé');
-
-        // 3. Initialiser les clients API
-        console.log('✅ ApiClient créé');
-        console.log('✅ WebSocketClient créé');
-
-        // 4. Connecter WebSocket si authentifié
-        if (stateManager.isAuthenticated()) {
-            console.log('🔌 Connexion WebSocket...');
-            RealtimeService.connectWebSocket();
+        if (profile?.user) {
+            stateManager.setUser(profile.user);
         }
 
-        // 5. Vérifier la navigation (redirection si non authentifié)
-        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        const protectedPages = [
-            'operations-dashboard.html',
-            'establishments-management.html',
-            'queue-management.html',
-            'manage-tickets.html',
-            'analytics-dashboard.html'
-        ];
+        if (allowedRoles.length && !allowedRoles.includes(role)) {
+            window.location.href = getDefaultHomeForRole(role);
+            return false;
+        }
 
-        if (protectedPages.includes(currentPage) && !stateManager.isAuthenticated()) {
-            console.warn('⚠️ Accès non autorisé, redirection...');
-            window.location.href = 'sign-in.html';
+        return true;
+    } catch (error) {
+        if (error?.status === 401 || error?.status === 403) {
+            clearAuthState();
+            redirectToSignIn();
+            return false;
+        }
+
+        console.error('[WAQTEK] Route guard error:', error);
+        showToast(error.message || 'Permission check failed', 'error');
+        return false;
+    }
+}
+
+async function initializeApp() {
+    console.group('[WAQTEK] INIT');
+
+    try {
+        console.log('[WAQTEK] Config loaded:', CONFIG.API.BASE_URL);
+        console.log('[WAQTEK] StateManager ready');
+        console.log('[WAQTEK] ApiClient ready');
+        console.log('[WAQTEK] WebSocketClient ready');
+
+        const canAccessPage = await enforceRouteGuard();
+        if (!canAccessPage) {
+            console.log('[WAQTEK] Route guard blocked navigation');
+            console.groupEnd();
             return;
         }
 
-        console.log('✅ Initialisation complète');
+        if (stateManager.isAuthenticated()) {
+            console.log('[WAQTEK] Connecting WebSocket...');
+            RealtimeService.connectWebSocket();
+        }
 
+        console.log('[WAQTEK] Initialization completed');
     } catch (error) {
-        console.error('❌ Erreur initialisation:', error);
-        showToast('Erreur initialisation: ' + error.message, 'error');
+        console.error('[WAQTEK] Initialization error:', error);
+        showToast('Initialization error: ' + error.message, 'error');
     }
 
     console.groupEnd();
 }
 
-/**
- * Attendre que le DOM soit chargé
- */
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
 });
 
-/**
- * Fonction utilitaire: Afficher un toast
- * (si utils.js n'est pas encore chargé)
- */
 function showToast(message, type = 'info') {
-    // Si la fonction est définie dans utils.js, l'utiliser
-    if (typeof window.showToast === 'function') {
+    if (typeof window.showToast === 'function' && window.showToast !== showToast) {
         window.showToast(message, type);
         return;
     }
 
-    // Sinon, créer un toast simple
     const toast = document.createElement('div');
     toast.style.cssText = `
         position: fixed;
@@ -93,58 +185,47 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-/**
- * Gestion des erreurs globales
- */
 window.addEventListener('error', (event) => {
-    console.error('❌ Erreur globale:', event.error);
-    showToast('Une erreur est survenue', 'error');
+    console.error('[WAQTEK] Global error:', event.error);
+    showToast('An error occurred', 'error');
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-    console.error('❌ Promise rejetée:', event.reason);
-    showToast('Erreur: ' + event.reason?.message || 'Erreur inconnue', 'error');
+    console.error('[WAQTEK] Unhandled rejection:', event.reason);
+    showToast('Error: ' + event.reason?.message || 'Unknown error', 'error');
 });
 
-/**
- * Gestion de la visibilité du document
- */
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-        console.log('⚠️ Page cachée');
+        console.log('[WAQTEK] Page hidden');
     } else {
-        console.log('✅ Page visible');
-        // Reconnecter WebSocket si nécessaire
+        console.log('[WAQTEK] Page visible');
         if (!wsClient.isConnected() && stateManager.isAuthenticated()) {
             wsClient.connect();
         }
     }
 });
 
-/**
- * Déconnexion automatique si le token est expiré
- */
 setInterval(() => {
     const token = stateManager.getToken();
-    if (token) {
-        // Vérifier si le token est expiré (JWT)
-        try {
-            const parts = token.split('.');
-            if (parts.length === 3) {
-                const payload = JSON.parse(atob(parts[1]));
-                const expiryTime = payload.exp * 1000; // Convertir en ms
-                const now = Date.now();
+    if (!token) return;
 
-                if (now > expiryTime) {
-                    console.log('⚠️ Token expiré, déconnexion');
-                    AuthService.logout();
-                    window.location.href = 'sign-in.html';
-                }
-            }
-        } catch (error) {
-            console.warn('⚠️ Impossible de vérifier token:', error);
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return;
+
+        const payload = JSON.parse(atob(parts[1]));
+        const expiryTime = payload.exp * 1000;
+        const now = Date.now();
+
+        if (now > expiryTime) {
+            console.log('[WAQTEK] Token expired, logout');
+            AuthService.logout();
+            window.location.href = getSignInUrl();
         }
+    } catch (error) {
+        console.warn('[WAQTEK] Token check failed:', error);
     }
-}, 60000); // Vérifier toutes les minutes
+}, 60000);
 
-console.log('✅ Init.js chargé');
+console.log('[WAQTEK] init.js loaded');

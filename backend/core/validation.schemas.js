@@ -5,7 +5,10 @@ export const schemas = {
         body: Joi.object({
             email: Joi.string().email().required(),
             password: Joi.string().min(6).required(),
-            role: Joi.string().valid('admin', 'manager', 'user').optional()
+            role: Joi.string().valid(
+                'admin', 'manager', 'waqtek_team', 'user', 'client',
+                'ADMIN', 'MANAGER', 'WAQTEK_TEAM', 'USER', 'CLIENT'
+            ).optional()
         })
     },
     authLogin: {

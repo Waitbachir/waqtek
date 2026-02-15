@@ -1,6 +1,20 @@
 (function () {
   const enterprisePages = [
     {
+      id: "admin-dashboard",
+      slug: "admin-dashboard",
+      label: "Admin Dashboard",
+      path: "enterprise/admin-dashboard.html",
+      allowedRoles: ["ADMIN"]
+    },
+    {
+      id: "manager-dashboard",
+      slug: "manager-dashboard",
+      label: "Manager Dashboard",
+      path: "enterprise/manager-dashboard.html",
+      allowedRoles: ["MANAGER"]
+    },
+    {
       id: "operations-dashboard",
       slug: "operations-dashboard",
       label: "Operations Dashboard",

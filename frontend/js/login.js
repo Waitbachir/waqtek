@@ -11,6 +11,8 @@ function normalizeRole(role) {
 
 function getDefaultHomeForRole(role) {
     const normalized = normalizeRole(role);
+    if (normalized === 'ADMIN') return 'admin-dashboard.html';
+    if (normalized === 'MANAGER') return 'manager-dashboard.html';
     if (normalized === 'WAQTEK_TEAM') return 'queue-overview.html';
     return 'operations-dashboard.html';
 }

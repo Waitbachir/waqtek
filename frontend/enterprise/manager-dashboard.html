@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WaQtek | Manager Dashboard</title>
+    <link rel="stylesheet" href="../css/enterprise-menu.css" />
+    <style>
+        body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f4f7fb; color: #153047; }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+        .head h1 { margin: 0; font-size: 2rem; }
+        .head p { margin: 5px 0 0; color: #607d94; }
+        .logout { border: 0; border-radius: 10px; background: #c62828; color: #fff; padding: 10px 14px; cursor: pointer; font-weight: 600; }
+        .context { background: #fff; border: 1px solid #d4e2ee; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+        .context strong { color: #0c3d61; }
+        .queues { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .queue { background: #fff; border: 1px solid #d4e2ee; border-radius: 12px; padding: 16px; cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+        .queue:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(14, 44, 69, .1); }
+        .queue h3 { margin: 0 0 8px; font-size: 1.1rem; }
+        .queue p { margin: 0; color: #5d778e; font-size: 0.9rem; }
+        .quick { margin-top: 16px; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .quick a { text-decoration: none; background: #0d5d8f; color: #fff; border-radius: 10px; padding: 11px 12px; text-align: center; font-weight: 600; }
+        .empty { background: #fff; border: 1px dashed #b6cadb; border-radius: 10px; padding: 14px; color: #5d778e; }
+
+        .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(10, 36, 58, .45); padding: 14px; z-index: 2000; }
+        .modal.show { display: flex; }
+        .modal-card { width: 100%; max-width: 520px; background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #d4e2ee; }
+        .modal-card h3 { margin: 0 0 10px; }
+        .counters { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 12px; }
+        .counter { border: 1px solid #bdd2e3; border-radius: 9px; padding: 10px; background: #f8fbff; cursor: pointer; text-align: center; font-weight: 600; }
+        .counter:hover { background: #e8f2fb; }
+        .counter.occupied { background: #f6f6f6; color: #95a7b6; border-color: #d9e2ea; cursor: not-allowed; }
+        .actions { display: flex; justify-content: flex-end; gap: 8px; }
+        .btn { border: 0; border-radius: 8px; padding: 9px 12px; cursor: pointer; font-weight: 600; }
+        .btn.cancel { background: #dde6ee; color: #2f4d65; }
+        .btn.confirm { background: #0d5d8f; color: #fff; }
+        @media (max-width: 920px) { .queues { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 620px) { .queues, .quick, .counters { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <div class="head">
+            <div>
+                <h1>Manager Dashboard</h1>
+                <p>Choisissez une queue puis un guichet libre</p>
+            </div>
+            <button id="logoutBtn" class="logout" type="button">Deconnexion</button>
+        </div>
+
+        <section class="context">
+            Etablissement actif: <strong id="activeEst">Chargement...</strong>
+        </section>
+
+        <section id="queuesGrid" class="queues"></section>
+        <div id="emptyState" class="empty" style="display:none;">Aucune queue disponible pour cet etablissement.</div>
+
+        <section class="quick">
+            <a href="ticket-management.html">Ticket Management</a>
+            <a href="../queue-display.html">Display TV</a>
+        </section>
+    </main>
+
+    <div id="counterModal" class="modal" aria-hidden="true">
+        <div class="modal-card">
+            <h3 id="modalTitle">Choisir un guichet libre</h3>
+            <div id="counterGrid" class="counters"></div>
+            <div class="actions">
+                <button id="cancelCounterBtn" class="btn cancel" type="button">Annuler</button>
+                <button id="confirmCounterBtn" class="btn confirm" type="button" disabled>Continuer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/core/StateManager.js"></script>
+    <script src="../js/core/ApiClient.js"></script>
+    <script src="../js/core/WebSocketClient.js"></script>
+    <script src="../js/init.js"></script>
+    <script src="../js/services/AuthService.js"></script>
+    <script src="../js/services/EstablishmentService.js"></script>
+    <script src="../js/services/QueueService.js"></script>
+    <script src="../js/services/TicketService.js"></script>
+    <script src="../js/services/StatsService.js"></script>
+    <script src="../js/services/RealtimeService.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/pages/enterprise/manager-dashboard.js"></script>
+    <script src="../js/enterprise-pages.js"></script>
+    <script src="../js/components/enterprise-menu.js"></script>
+</body>
+</html>

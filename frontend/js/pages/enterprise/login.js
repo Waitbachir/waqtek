@@ -22,12 +22,16 @@ function normalizeRole(role) {
 
 function getDefaultHomeForRole(role) {
     const normalized = normalizeRole(role);
+    if (normalized === 'ADMIN') return 'admin-dashboard.html';
+    if (normalized === 'MANAGER') return 'manager-dashboard.html';
     if (normalized === 'WAQTEK_TEAM') return 'queue-overview.html';
     return 'operations-dashboard.html';
 }
 
 function getAllowedRolesForPage(pageName) {
     const rules = {
+        'admin-dashboard.html': ['ADMIN'],
+        'manager-dashboard.html': ['MANAGER'],
         'operations-dashboard.html': ['ADMIN', 'MANAGER', 'WAQTEK_TEAM'],
         'analytics-dashboard.html': ['ADMIN', 'WAQTEK_TEAM'],
         'establishments-management.html': ['ADMIN', 'WAQTEK_TEAM'],

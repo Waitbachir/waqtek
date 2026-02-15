@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WaQtek | Admin Dashboard</title>
+    <link rel="stylesheet" href="../css/enterprise-menu.css" />
+    <style>
+        body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f3f7fb; color: #0f2a3f; }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .title h1 { margin: 0; font-size: 2rem; }
+        .title p { margin: 6px 0 0; color: #4f6b81; }
+        .logout { border: 0; border-radius: 10px; background: #c62828; color: #fff; padding: 10px 14px; cursor: pointer; font-weight: 600; }
+        .stats { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; }
+        .card { background: #fff; border: 1px solid #d6e2ec; border-radius: 12px; padding: 16px; box-shadow: 0 8px 20px rgba(14, 44, 69, 0.08); }
+        .card p { margin: 0; color: #58748a; font-size: 0.9rem; }
+        .card strong { display: block; margin-top: 8px; font-size: 1.8rem; color: #0d3554; }
+        .quick { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .quick a { display: block; text-decoration: none; border-radius: 10px; background: #0d5d8f; color: #fff; padding: 12px; text-align: center; font-weight: 600; }
+        .section { margin-top: 18px; background: #fff; border-radius: 12px; border: 1px solid #d6e2ec; padding: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e8eef3; }
+        th { color: #4f6b81; font-size: 0.85rem; }
+        @media (max-width: 900px) { .stats, .quick { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 560px) { .stats, .quick { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="head">
+            <div class="title">
+                <h1>Admin Dashboard</h1>
+                <p>Vue proprietaire et analytics globales de l'etablissement</p>
+            </div>
+            <button class="logout" id="logoutBtn" type="button">Deconnexion</button>
+        </div>
+
+        <section class="stats">
+            <article class="card"><p>Etablissements</p><strong id="estCount">0</strong></article>
+            <article class="card"><p>Queues</p><strong id="queueCount">0</strong></article>
+            <article class="card"><p>Tickets aujourd'hui</p><strong id="ticketCount">0</strong></article>
+            <article class="card"><p>Plan</p><strong id="planName">-</strong></article>
+        </section>
+
+        <section class="quick">
+            <a href="ticket-management.html">Ticket Management</a>
+            <a href="../client/pos-ticket.html">POS Ticket</a>
+            <a href="../queue-display.html">Display TV</a>
+            <a href="analytics-dashboard.html">Analytics</a>
+        </section>
+
+        <section class="section">
+            <h2 style="margin-top:0;">Etablissements recents</h2>
+            <table>
+                <thead>
+                    <tr><th>Nom</th><th>Adresse</th><th>Date creation</th></tr>
+                </thead>
+                <tbody id="estTable">
+                    <tr><td colspan="3">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/core/StateManager.js"></script>
+    <script src="../js/core/ApiClient.js"></script>
+    <script src="../js/core/WebSocketClient.js"></script>
+    <script src="../js/init.js"></script>
+    <script src="../js/services/AuthService.js"></script>
+    <script src="../js/services/EstablishmentService.js"></script>
+    <script src="../js/services/QueueService.js"></script>
+    <script src="../js/services/StatsService.js"></script>
+    <script src="../js/services/RealtimeService.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/pages/enterprise/admin-dashboard.js"></script>
+    <script src="../js/enterprise-pages.js"></script>
+    <script src="../js/components/enterprise-menu.js"></script>
+</body>
+</html>

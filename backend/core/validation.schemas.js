@@ -11,6 +11,13 @@ export const schemas = {
             ).optional()
         })
     },
+    authRoleRegister: {
+        body: Joi.object({
+            email: Joi.string().email().required(),
+            password: Joi.string().min(6).required(),
+            full_name: Joi.string().min(2).required()
+        })
+    },
     authLogin: {
         body: Joi.object({
             email: Joi.string().email().required(),

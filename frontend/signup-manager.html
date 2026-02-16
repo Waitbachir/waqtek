@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signup Manager</title>
+    <style>
+        body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #eef4fb; color: #19344c; }
+        .wrap { max-width: 520px; margin: 36px auto; padding: 0 14px; }
+        .card { background: #fff; border: 1px solid #d0dfec; border-radius: 14px; padding: 22px; box-shadow: 0 12px 24px rgba(22, 58, 89, .08); }
+        h1 { margin: 0 0 10px; font-size: 1.6rem; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #0f5f8f; color: #fff; font-size: .8rem; margin-bottom: 14px; }
+        label { display: block; margin: 10px 0 6px; font-weight: 600; }
+        input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #c3d6e6; font-size: 14px; }
+        button { margin-top: 14px; width: 100%; border: 0; border-radius: 9px; padding: 11px; color: #fff; background: #0f5f8f; font-weight: 700; cursor: pointer; }
+        .msg { margin-top: 12px; padding: 10px; border-radius: 8px; display: none; font-size: .92rem; }
+        .error { background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+        .success { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+    </style>
+</head>
+<body data-signup-role="manager">
+    <main class="wrap">
+        <section class="card">
+            <h1 id="pageTitle">Inscription Manager</h1>
+            <span class="badge" id="roleBadge">manager</span>
+            <form id="signupForm">
+                <label for="fullName">Nom complet</label>
+                <input id="fullName" type="text" required />
+                <label for="email">Email</label>
+                <input id="email" type="email" required />
+                <label for="password">Mot de passe</label>
+                <input id="password" type="password" minlength="6" required />
+                <label for="confirmPassword">Confirmer le mot de passe</label>
+                <input id="confirmPassword" type="password" minlength="6" required />
+                <button id="submitBtn" type="submit">Creer le compte</button>
+            </form>
+            <div id="errorBox" class="msg error"></div>
+            <div id="successBox" class="msg success"></div>
+        </section>
+    </main>
+
+    <script src="./js/config.js"></script>
+    <script src="./js/core/StateManager.js"></script>
+    <script src="./js/core/ApiClient.js"></script>
+    <script src="./js/pages/public/signup-role.js"></script>
+</body>
+</html>

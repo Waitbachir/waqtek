@@ -192,3 +192,96 @@ test('GET /admin/users denies manager and allows admin', async () => {
         await new Promise((resolve) => server.close(resolve));
     }
 });
+
+test('POST /auth/register/waqtekteam creates waqtek_team user with hashed password', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/auth', authRoutes);
+    const server = app.listen(0);
+
+    try {
+        const address = server.address();
+        const port = typeof address === 'object' && address ? address.port : 0;
+        const email = `waqtekteam-${Date.now()}@example.com`;
+
+        const res = await fetch(`http://127.0.0.1:${port}/auth/register/waqtekteam`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: 'Team User',
+                email,
+                password: 'secret123'
+            })
+        });
+
+        const payload = await res.json();
+        assert.equal(res.status, 201);
+        assert.equal(payload.user.role, 'waqtek_team');
+        assert.ok(payload.user.id);
+
+        const stored = await User.findByEmail(email);
+        assert.ok(stored);
+        assert.equal(stored.role, 'waqtek_team');
+        assert.equal(typeof stored.password_hash, 'string');
+        assert.equal(stored.password_hash === 'secret123', false);
+    } finally {
+        await new Promise((resolve) => server.close(resolve));
+    }
+});
+
+test('POST /auth/register/admin creates admin user', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/auth', authRoutes);
+    const server = app.listen(0);
+
+    try {
+        const address = server.address();
+        const port = typeof address === 'object' && address ? address.port : 0;
+        const email = `admin-${Date.now()}@example.com`;
+
+        const res = await fetch(`http://127.0.0.1:${port}/auth/register/admin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: 'Admin User',
+                email,
+                password: 'secret123'
+            })
+        });
+
+        const payload = await res.json();
+        assert.equal(res.status, 201);
+        assert.equal(payload.user.role, 'admin');
+    } finally {
+        await new Promise((resolve) => server.close(resolve));
+    }
+});
+
+test('POST /auth/register/manager validates payload server-side', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/auth', authRoutes);
+    const server = app.listen(0);
+
+    try {
+        const address = server.address();
+        const port = typeof address === 'object' && address ? address.port : 0;
+
+        const res = await fetch(`http://127.0.0.1:${port}/auth/register/manager`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: 'M',
+                email: 'invalid',
+                password: '123'
+            })
+        });
+
+        const payload = await res.json();
+        assert.equal(res.status, 400);
+        assert.equal(payload.error, 'VALIDATION_ERROR');
+    } finally {
+        await new Promise((resolve) => server.close(resolve));
+    }
+});

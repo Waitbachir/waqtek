@@ -1,5 +1,5 @@
 import express from "express";
-import { getAuthProfileByUserId, login, register } from "../services/auth.service.js";
+import { getAuthProfileByUserId, login, register, registerWithForcedRole } from "../services/auth.service.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 import { schemas } from "../core/validation.schemas.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
@@ -22,6 +22,33 @@ router.post('/login', validateRequest(schemas.authLogin), async (req, res) => {
     res.json(result);
   } catch (e) {
     res.status(401).json({ error: e.message });
+  }
+});
+
+router.post('/register/waqtekteam', validateRequest(schemas.authRoleRegister), async (req, res) => {
+  try {
+    const result = await registerWithForcedRole(req.body, 'waqtek_team');
+    res.status(201).json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+router.post('/register/admin', validateRequest(schemas.authRoleRegister), async (req, res) => {
+  try {
+    const result = await registerWithForcedRole(req.body, 'admin');
+    res.status(201).json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+router.post('/register/manager', validateRequest(schemas.authRoleRegister), async (req, res) => {
+  try {
+    const result = await registerWithForcedRole(req.body, 'manager');
+    res.status(201).json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 

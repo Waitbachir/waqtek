@@ -11,7 +11,7 @@
         h1 { margin: 0 0 10px; font-size: 1.6rem; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #0f5f8f; color: #fff; font-size: .8rem; margin-bottom: 14px; }
         label { display: block; margin: 10px 0 6px; font-weight: 600; }
-        input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #c3d6e6; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #c3d6e6; font-size: 14px; }
         button { margin-top: 14px; width: 100%; border: 0; border-radius: 9px; padding: 11px; color: #fff; background: #0f5f8f; font-weight: 700; cursor: pointer; }
         .msg { margin-top: 12px; padding: 10px; border-radius: 8px; display: none; font-size: .92rem; }
         .error { background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
@@ -32,6 +32,10 @@
                 <input id="password" type="password" minlength="6" required />
                 <label for="confirmPassword">Confirmer le mot de passe</label>
                 <input id="confirmPassword" type="password" minlength="6" required />
+                <label for="establishmentId">Etablissement</label>
+                <select id="establishmentId" required>
+                    <option value="">Chargement des etablissements...</option>
+                </select>
                 <button id="submitBtn" type="submit">Creer le compte</button>
             </form>
             <div id="errorBox" class="msg error"></div>

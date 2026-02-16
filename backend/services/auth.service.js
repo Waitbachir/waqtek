@@ -1,5 +1,7 @@
 import User from "../models/user.model.js";
 import { getPermissionsForRole, normalizeRole } from "../core/rbac.js";
+import Establishment from "../models/establishment.model.js";
+import logger from "../core/logger.js";
 
 async function ensureEmailAvailable(email) {
   const existing = await User.findByEmail(email);
@@ -48,6 +50,66 @@ export async function registerWithForcedRole({ email, password, full_name }, for
     },
     permissions: getPermissionsForRole(normalizedRole)
   };
+}
+
+export async function registerManagerWithEstablishment({ email, password, full_name, establishment_id }) {
+  const establishmentId = String(establishment_id || "").trim();
+  if (!establishmentId) {
+    throw new Error("establishment_id is required");
+  }
+
+  const establishment = await Establishment.findById(establishmentId);
+  if (!establishment) {
+    throw new Error("Establishment not found");
+  }
+
+  await ensureEmailAvailable(email);
+
+  const created = await User.create({
+    email,
+    password,
+    role: "manager",
+    full_name
+  });
+
+  try {
+    await Establishment.update(establishmentId, { manager_id: created.id });
+
+    try {
+      await User.updateById(created.id, { id_etab: establishmentId });
+    } catch (userUpdateError) {
+      logger.warn("Manager signup: unable to persist users.id_etab", {
+        userId: created.id,
+        establishmentId,
+        error: userUpdateError?.message
+      });
+    }
+
+    const normalizedRole = normalizeRole(created.role);
+    return {
+      token: User.generateJWT(created),
+      user: {
+        id: created.id,
+        email: created.email,
+        role: created.role,
+        normalizedRole,
+        full_name: created.full_name || null,
+        id_etab: establishmentId,
+        establishment_id: establishmentId
+      },
+      permissions: getPermissionsForRole(normalizedRole)
+    };
+  } catch (error) {
+    try {
+      await User.deleteById(created.id);
+    } catch (rollbackError) {
+      logger.error("Manager signup rollback failed", {
+        userId: created.id,
+        error: rollbackError?.message
+      });
+    }
+    throw error;
+  }
 }
 
 export async function login(email, password) {

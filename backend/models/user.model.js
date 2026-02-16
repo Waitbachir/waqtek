@@ -57,6 +57,10 @@ class User {
         return await supabase.findAll("users");
     }
 
+    static async updateById(id, data) {
+        return await supabase.update("users", id, data);
+    }
+
     static async deleteById(id) {
         return await supabase.delete("users", id);
     }

@@ -60,6 +60,34 @@
         return null;
     }
 
+    async function loadManagerEstablishments() {
+        const select = byId("establishmentId");
+        const cfg = getRoleConfig();
+        if (!select || cfg.role !== "manager") return;
+
+        try {
+            const response = await apiClient.getPublicEstablishments();
+            const list = Array.isArray(response?.establishments)
+                ? response.establishments
+                : (Array.isArray(response) ? response : []);
+
+            if (!list.length) {
+                select.innerHTML = '<option value="">Aucun etablissement disponible</option>';
+                select.disabled = true;
+                return;
+            }
+
+            select.innerHTML = ['<option value="">Selectionner un etablissement</option>']
+                .concat(list.map((est) => `<option value="${est.id}">${String(est.name || est.id)}</option>`))
+                .join("");
+            select.disabled = false;
+        } catch (error) {
+            select.innerHTML = '<option value="">Erreur de chargement</option>';
+            select.disabled = true;
+            showMessage("error", "Impossible de charger la liste des etablissements.");
+        }
+    }
+
     async function submitSignup(event) {
         event.preventDefault();
         clearMessages();
@@ -74,6 +102,7 @@
         const email = byId("email")?.value?.trim() || "";
         const password = byId("password")?.value || "";
         const confirmPassword = byId("confirmPassword")?.value || "";
+        const establishmentId = byId("establishmentId")?.value || "";
         const submitBtn = byId("submitBtn");
 
         const validationError = validateForm({ fullName, email, password, confirmPassword });
@@ -82,15 +111,25 @@
             return;
         }
 
+        if (cfg.role === "manager" && !establishmentId) {
+            showMessage("error", "Selectionnez un etablissement.");
+            return;
+        }
+
         submitBtn.disabled = true;
         submitBtn.textContent = "Inscription...";
 
         try {
-            const response = await apiClient.post(cfg.endpoint, {
+            const payload = {
                 full_name: fullName,
                 email,
                 password
-            });
+            };
+            if (cfg.role === "manager") {
+                payload.establishment_id = establishmentId;
+            }
+
+            const response = await apiClient.post(cfg.endpoint, payload);
 
             if (!response?.user?.id) {
                 throw new Error("Creation du compte echouee.");
@@ -116,6 +155,7 @@
         if (pageTitle) pageTitle.textContent = cfg.title;
         if (roleBadge) roleBadge.textContent = cfg.role || "unknown";
 
+        loadManagerEstablishments();
         byId("signupForm")?.addEventListener("submit", submitSignup);
     }
 

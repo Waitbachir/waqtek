@@ -1,5 +1,11 @@
 import express from "express";
-import { getAuthProfileByUserId, login, register, registerWithForcedRole } from "../services/auth.service.js";
+import {
+  getAuthProfileByUserId,
+  login,
+  register,
+  registerManagerWithEstablishment,
+  registerWithForcedRole
+} from "../services/auth.service.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 import { schemas } from "../core/validation.schemas.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
@@ -43,9 +49,9 @@ router.post('/register/admin', validateRequest(schemas.authRoleRegister), async 
   }
 });
 
-router.post('/register/manager', validateRequest(schemas.authRoleRegister), async (req, res) => {
+router.post('/register/manager', validateRequest(schemas.authManagerRoleRegister), async (req, res) => {
   try {
-    const result = await registerWithForcedRole(req.body, 'manager');
+    const result = await registerManagerWithEstablishment(req.body);
     res.status(201).json(result);
   } catch (e) {
     res.status(400).json({ error: e.message });

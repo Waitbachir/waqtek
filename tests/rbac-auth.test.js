@@ -8,6 +8,7 @@ process.env.USE_FAKE_SUPABASE = 'true';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 const User = (await import('../backend/models/user.model.js')).default;
+const Establishment = (await import('../backend/models/establishment.model.js')).default;
 const { requireAuth } = await import('../backend/middlewares/auth.middleware.js');
 const { requireRole } = await import('../backend/middlewares/role.middleware.js');
 const { requirePermission } = await import('../backend/middlewares/permissions.middleware.js');
@@ -253,6 +254,12 @@ test('POST /auth/register/admin creates admin user', async () => {
         const payload = await res.json();
         assert.equal(res.status, 201);
         assert.equal(payload.user.role, 'admin');
+
+        const stored = await User.findByEmail(email);
+        assert.ok(stored);
+        assert.equal(stored.role, 'admin');
+        assert.equal(typeof stored.password_hash, 'string');
+        assert.equal(stored.password_hash === 'secret123', false);
     } finally {
         await new Promise((resolve) => server.close(resolve));
     }
@@ -274,13 +281,58 @@ test('POST /auth/register/manager validates payload server-side', async () => {
             body: JSON.stringify({
                 full_name: 'M',
                 email: 'invalid',
-                password: '123'
+                password: '123',
+                establishment_id: ''
             })
         });
 
         const payload = await res.json();
         assert.equal(res.status, 400);
         assert.equal(payload.error, 'VALIDATION_ERROR');
+    } finally {
+        await new Promise((resolve) => server.close(resolve));
+    }
+});
+
+test('POST /auth/register/manager creates user and links establishment manager_id', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/auth', authRoutes);
+    const server = app.listen(0);
+
+    try {
+        const est = await Establishment.create({
+            name: `Manager Link Est ${Date.now()}`,
+            manager_id: null
+        });
+
+        const address = server.address();
+        const port = typeof address === 'object' && address ? address.port : 0;
+        const email = `manager-link-${Date.now()}@example.com`;
+
+        const res = await fetch(`http://127.0.0.1:${port}/auth/register/manager`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: 'Manager Linked',
+                email,
+                password: 'secret123',
+                establishment_id: String(est.id)
+            })
+        });
+
+        const payload = await res.json();
+        assert.equal(res.status, 201);
+        assert.equal(payload.user.role, 'manager');
+        assert.ok(payload.user.id);
+
+        const storedUser = await User.findByEmail(email);
+        assert.ok(storedUser);
+        assert.equal(storedUser.role, 'manager');
+
+        const linkedEst = await Establishment.findById(est.id);
+        assert.ok(linkedEst);
+        assert.equal(String(linkedEst.manager_id), String(storedUser.id));
     } finally {
         await new Promise((resolve) => server.close(resolve));
     }

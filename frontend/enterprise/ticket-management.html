@@ -37,31 +37,20 @@ tailwind.config = {
     </div>
 
     <div class="flex flex-wrap gap-3 items-center">
+      <div class="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 min-w-[220px]">
+        <div class="text-xs text-slate-500">Etablissement</div>
+        <div id="activeEstablishmentName" class="text-sm font-semibold">-</div>
+      </div>
 
-      <select id="establishmentSelect"
-        class="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-accent outline-none min-w-[200px]">
-        <option value="">-- Ã‰tablissement --</option>
-      </select>
+      <div class="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 min-w-[220px]">
+        <div class="text-xs text-slate-500">Queue</div>
+        <div id="activeQueueName" class="text-sm font-semibold">-</div>
+      </div>
 
-      <select id="queueSelect" disabled
-        class="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-accent outline-none min-w-[200px] disabled:bg-slate-200">
-        <option value="">-- File d'attente --</option>
-      </select>
-
-      <select id="counterSelect"
-        class="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-accent outline-none min-w-[160px]">
-        <option value="">-- Guichet --</option>
-        <option value="1">Guichet 1</option>
-        <option value="2">Guichet 2</option>
-        <option value="3">Guichet 3</option>
-        <option value="4">Guichet 4</option>
-        <option value="5">Guichet 5</option>
-        <option value="6">Guichet 6</option>
-        <option value="7">Guichet 7</option>
-        <option value="8">Guichet 8</option>
-        <option value="9">Guichet 9</option>
-        <option value="10">Guichet 10</option>
-      </select>
+      <div class="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 min-w-[170px]">
+        <div class="text-xs text-slate-500">Guichet</div>
+        <div id="activeCounterValue" class="text-sm font-semibold">-</div>
+      </div>
 
       <button onclick="refreshData()"
         class="bg-accent hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-medium shadow transition">
@@ -169,7 +158,7 @@ tailwind.config = {
           <tbody id="ticketsTable" class="divide-y">
             <tr>
               <td colspan="7" class="text-center py-10 text-slate-400">
-                SÃ©lectionnez une file d'attente
+                Chargement des tickets...
               </td>
             </tr>
           </tbody>

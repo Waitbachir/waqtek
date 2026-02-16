@@ -23,8 +23,7 @@ let manageTicketsInitialized = false;
 
 window.pageState = pageState;
 
-const COUNTER_STORAGE_KEY = 'waqtek_selected_counter';
-const DEFAULT_COUNTERS = 10;
+const MANAGER_CONTEXT_KEY = 'waqtek_manager_context_v1';
 const WAITING_CACHE_PREFIX = 'waqtek_waiting_cache_';
 const ENTERPRISE_TICKETS_CACHE_PREFIX = 'waqtek_enterprise_tickets_cache_';
 const QUEUE_CACHE_PREFIX = 'waqtek_enterprise_queue_cache_';
@@ -38,6 +37,24 @@ function safeParseJson(raw, fallback = null) {
     } catch (_) {
         return fallback;
     }
+}
+
+function normalizeManagerContext(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const queueId = raw.queueId ?? raw.queue_id ?? null;
+    const establishmentId = raw.establishmentId ?? raw.establishment_id ?? null;
+    const counter = raw.counter ?? null;
+
+    if (!queueId || !counter) return null;
+    return {
+        queueId: String(queueId),
+        establishmentId: establishmentId ? String(establishmentId) : null,
+        counter: String(counter)
+    };
+}
+
+function readManagerContextFromLocalStorage() {
+    return normalizeManagerContext(safeParseJson(localStorage.getItem(MANAGER_CONTEXT_KEY), null));
 }
 
 function isOfflineError(error) {
@@ -332,151 +349,35 @@ async function syncPendingActions() {
     updateSyncBanner();
 }
 
-function populateCounterSelect() {
-    const select = document.getElementById('counterSelect');
-    if (!select) return;
-
-    if (!select.options || select.options.length <= 1) {
-        const options = ['<option value="">-- Guichet --</option>'];
-        for (let i = 1; i <= DEFAULT_COUNTERS; i++) {
-            options.push(`<option value="${i}">Guichet ${i}</option>`);
-        }
-        select.innerHTML = options.join('');
-    }
-
-    const saved = localStorage.getItem(COUNTER_STORAGE_KEY);
-    if (saved) {
-        select.value = saved;
-        pageState.selectedCounter = saved;
-    }
-
-    select.onchange = function onCounterChange() {
-        const value = this.value || '';
-        pageState.selectedCounter = value ? value : null;
-
-        if (value) {
-            localStorage.setItem(COUNTER_STORAGE_KEY, value);
-        } else {
-            localStorage.removeItem(COUNTER_STORAGE_KEY);
-        }
-
-        syncCurrentTicketForCounter();
-        updateCurrentTicketUI(pageState.currentTicket);
-        updateActionButtonsState();
-    };
+function updateContextHeader({ establishmentName, queueName, counter }) {
+    const estEl = document.getElementById('activeEstablishmentName');
+    const queueEl = document.getElementById('activeQueueName');
+    const counterEl = document.getElementById('activeCounterValue');
+    if (estEl) estEl.textContent = establishmentName || '-';
+    if (queueEl) queueEl.textContent = queueName || '-';
+    if (counterEl) counterEl.textContent = counter ? `Guichet ${counter}` : '-';
 }
 
-function populateEstablishmentsSelect(establishments) {
-    const select = document.getElementById('establishmentSelect');
-    if (!select) return;
-
-    const list = Array.isArray(establishments) ? establishments : [];
-
-    if (list.length === 0) {
-        select.innerHTML = '<option value="">-- Etablissement --</option>';
-        return;
-    }
-
-    select.innerHTML = list
-        .map((est) => `<option value="${est.id}">${escapeHtml(est.name || est.id)}</option>`)
-        .join('');
-
-    if (pageState.selectedEstId) {
-        select.value = pageState.selectedEstId;
-    }
-
-    select.onchange = async function onEstablishmentChange() {
-        pageState.selectedEstId = this.value || null;
-        pageState.selectedQueueId = null;
-        pageState.currentTicketId = null;
-        pageState.currentTicket = null;
-        pageState.allTickets = [];
-        pageState.tickets = [];
-
-        updateCurrentTicketUI(null);
-        updateActionButtonsState();
-
-        if (!pageState.selectedEstId) {
-            pageState.queues = [];
-            populateQueuesSelect();
-            return;
-        }
-
-        await loadQueuesForSelectedEstablishment();
-    };
-}
-
-function populateQueuesSelect() {
-    const select = document.getElementById('queueSelect');
-    if (!select) return;
-
-    if (!pageState.queues || pageState.queues.length === 0) {
-        select.innerHTML = '<option value="">-- File d\'attente --</option>';
-        select.disabled = true;
-        return;
-    }
-
-    select.innerHTML = pageState.queues
-        .map((queue) => `<option value="${queue.id}">${escapeHtml(queue.name || queue.id)}</option>`)
-        .join('');
-
-    select.disabled = false;
-
-    if (pageState.selectedQueueId) {
-        select.value = pageState.selectedQueueId;
-    }
-
-    select.onchange = async function onQueueChange() {
-        pageState.selectedQueueId = this.value || null;
-        pageState.currentTicketId = null;
-        pageState.currentTicket = null;
-        updateCurrentTicketUI(null);
-
-        if (!pageState.selectedQueueId) {
-            pageState.allTickets = [];
-            rebuildAndRenderUI();
-            return;
-        }
-
-        await loadTicketsForQueue(pageState.selectedQueueId);
-        setupRealtimeUpdates();
-    };
-}
-
-async function loadQueuesForSelectedEstablishment() {
-    if (!pageState.selectedEstId) {
-        pageState.queues = [];
-        populateQueuesSelect();
-        return;
-    }
-
+async function resolveManagerContext() {
     try {
-        const queues = await QueueService.getQueuesByEstablishment(pageState.selectedEstId);
-        pageState.queues = Array.isArray(queues) ? queues : [];
-        writeQueuesCache(pageState.selectedEstId, pageState.queues);
-        setConnectionLost(false);
+        const apiContext = await QueueService.getManagerContext();
+        const normalized = normalizeManagerContext(apiContext);
+        if (normalized) {
+            localStorage.setItem(MANAGER_CONTEXT_KEY, JSON.stringify({
+                establishmentId: normalized.establishmentId,
+                queueId: normalized.queueId,
+                counter: normalized.counter,
+                savedAt: new Date().toISOString()
+            }));
+            return normalized;
+        }
     } catch (error) {
-        if (isOfflineError(error)) {
-            setConnectionLost(true);
-            pageState.queues = readQueuesCache(pageState.selectedEstId);
-            showToast('Connexion perdue: files chargees depuis le cache.', 'warning');
-        } else {
-            console.error('[MANAGE-TICKETS] Queue load error:', error);
-            showToast('Erreur lors du chargement des files', 'error');
-            pageState.queues = [];
+        if (error?.status !== 404) {
+            console.warn('[MANAGE-TICKETS] Context API unavailable, fallback local storage', error);
         }
     }
 
-    populateQueuesSelect();
-
-    if (pageState.queues.length > 0) {
-        pageState.selectedQueueId = pageState.queues[0].id;
-        await loadTicketsForQueue(pageState.selectedQueueId);
-        setupRealtimeUpdates();
-    } else {
-        pageState.allTickets = [];
-        rebuildAndRenderUI();
-    }
+    return readManagerContextFromLocalStorage();
 }
 
 function rebuildAndRenderUI() {
@@ -539,12 +440,12 @@ function selectNextWaitingTicket() {
 
 async function handleCallNextTicket() {
     if (!pageState.selectedQueueId) {
-        showToast('Veuillez selectionner une file', 'warning');
+        showToast('Contexte queue introuvable. Revenez au dashboard manager.', 'warning');
         return;
     }
 
     if (!pageState.selectedCounter) {
-        showToast('Veuillez selectionner un guichet', 'warning');
+        showToast('Contexte guichet introuvable. Revenez au dashboard manager.', 'warning');
         return;
     }
 
@@ -617,7 +518,7 @@ async function handleUpdateTicketStatus(ticketId, newStatus) {
     try {
         if (newStatus === 'called') {
             if (!pageState.selectedCounter) {
-                showToast('Veuillez selectionner un guichet', 'warning');
+                showToast('Contexte guichet introuvable. Revenez au dashboard manager.', 'warning');
                 await loadTicketsForQueue(pageState.selectedQueueId, { silentError: true });
                 return;
             }
@@ -845,34 +746,62 @@ async function loadManageTicketsPage() {
             return;
         }
 
-        populateCounterSelect();
         updateSyncBanner();
-
-        let establishments = [];
-
-        try {
-            establishments = await EstablishmentService.getEstablishments();
-            writeEstablishmentsCache(establishments);
-            setConnectionLost(false);
-        } catch (error) {
-            if (isOfflineError(error)) {
-                setConnectionLost(true);
-                establishments = readEstablishmentsCache();
-                showToast('Connexion perdue: etablissements recuperes depuis le cache.', 'warning');
-            } else {
-                throw error;
+        const managerContext = await resolveManagerContext();
+        if (!managerContext) {
+            showToast('Selectionnez une queue et un guichet depuis le dashboard manager.', 'warning');
+            const role = AuthService.normalizeRole(state.getUser()?.normalizedRole || state.getUser()?.role);
+            if (role === 'MANAGER') {
+                setTimeout(() => {
+                    window.location.href = 'manager-dashboard.html';
+                }, 700);
             }
-        }
-
-        if (!Array.isArray(establishments) || establishments.length === 0) {
-            showToast('Aucun etablissement disponible', 'warning');
             return;
         }
 
-        pageState.selectedEstId = pageState.selectedEstId || establishments[0].id;
-        populateEstablishmentsSelect(establishments);
+        pageState.selectedQueueId = managerContext.queueId;
+        pageState.selectedCounter = String(managerContext.counter);
+        if (managerContext.establishmentId) {
+            pageState.selectedEstId = String(managerContext.establishmentId);
+        }
 
-        await loadQueuesForSelectedEstablishment();
+        let establishmentName = '-';
+        if (pageState.selectedEstId) {
+            try {
+                const establishments = await EstablishmentService.getEstablishments();
+                writeEstablishmentsCache(establishments);
+                const list = Array.isArray(establishments) ? establishments : [];
+                const est = list.find((item) => String(item?.id) === String(pageState.selectedEstId));
+                establishmentName = est?.name || '-';
+                setConnectionLost(false);
+            } catch (error) {
+                if (isOfflineError(error)) {
+                    setConnectionLost(true);
+                    const list = readEstablishmentsCache();
+                    const est = list.find((item) => String(item?.id) === String(pageState.selectedEstId));
+                    establishmentName = est?.name || '-';
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        let queueName = '-';
+        try {
+            const queueResponse = await QueueService.getQueue(pageState.selectedQueueId);
+            queueName = queueResponse?.name || '-';
+        } catch (_) {
+            queueName = pageState.selectedQueueId || '-';
+        }
+
+        updateContextHeader({
+            establishmentName,
+            queueName,
+            counter: pageState.selectedCounter
+        });
+
+        await loadTicketsForQueue(pageState.selectedQueueId);
+        setupRealtimeUpdates();
         await syncPendingActions();
     } catch (error) {
         console.error('[MANAGE-TICKETS] Load error:', error);

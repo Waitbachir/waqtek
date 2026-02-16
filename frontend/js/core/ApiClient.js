@@ -191,6 +191,21 @@ class ApiClient {
         return this.request(`/queues/public/establishment/${establishmentId}`);
     }
 
+    async getQueueAvailableCounters(queueId) {
+        return this.request(`/queues/${queueId}/counters/available`);
+    }
+
+    async saveManagerContext(data) {
+        return this.request('/queues/manager/context', {
+            method: 'POST',
+            data
+        });
+    }
+
+    async getManagerContext() {
+        return this.request('/queues/manager/context');
+    }
+
     async createQueue(data) {
         return this.request('/queues', {
             method: 'POST',

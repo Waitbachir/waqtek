@@ -1,7 +1,5 @@
 (function () {
     const MANAGER_CONTEXT_KEY = "waqtek_manager_context_v1";
-    const COUNTER_STATE_KEY = "waqtek_counter_sessions_v1";
-    const COUNTER_TTL_MS = 10 * 60 * 1000;
 
     const stateLocal = {
         establishment: null,
@@ -12,42 +10,10 @@
 
     function getEl(id) { return document.getElementById(id); }
 
-    function parseJson(raw, fallback) {
-        try { return JSON.parse(raw); } catch (_) { return fallback; }
-    }
-
     function escapeHtml(text) {
         const div = document.createElement("div");
         div.textContent = text ?? "";
         return div.innerHTML;
-    }
-
-    function getCounterSessions() {
-        const map = parseJson(localStorage.getItem(COUNTER_STATE_KEY), {}) || {};
-        const now = Date.now();
-        const next = {};
-        Object.keys(map).forEach((k) => {
-            if (map[k]?.expiresAt > now) next[k] = map[k];
-        });
-        localStorage.setItem(COUNTER_STATE_KEY, JSON.stringify(next));
-        return next;
-    }
-
-    function reserveCounter(queueId, counterNumber) {
-        const key = `${queueId}:${counterNumber}`;
-        const sessions = getCounterSessions();
-        sessions[key] = { expiresAt: Date.now() + COUNTER_TTL_MS };
-        localStorage.setItem(COUNTER_STATE_KEY, JSON.stringify(sessions));
-    }
-
-    function loadFreeCounters(queueId) {
-        const sessions = getCounterSessions();
-        const counters = [];
-        for (let i = 1; i <= 6; i += 1) {
-            const key = `${queueId}:${i}`;
-            counters.push({ number: i, occupied: !!sessions[key] });
-        }
-        return counters;
     }
 
     function renderQueues() {
@@ -79,7 +45,7 @@
         });
     }
 
-    function openCounterModal(queue) {
+    async function openCounterModal(queue) {
         stateLocal.selectedQueue = queue;
         stateLocal.selectedCounter = null;
         const modal = getEl("counterModal");
@@ -91,24 +57,35 @@
         title.textContent = `Queue: ${queue.name || queue.id} - Choisir un guichet libre`;
         confirmBtn.disabled = true;
 
-        const counters = loadFreeCounters(queue.id);
-        grid.innerHTML = counters.map((c) => `
-            <button class="counter ${c.occupied ? "occupied" : ""}" data-counter="${c.number}" type="button" ${c.occupied ? "disabled" : ""}>
-                Guichet ${c.number}
-            </button>
-        `).join("");
-
-        grid.querySelectorAll(".counter:not(.occupied)").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                grid.querySelectorAll(".counter").forEach((el) => el.classList.remove("selected"));
-                btn.classList.add("selected");
-                stateLocal.selectedCounter = Number(btn.getAttribute("data-counter"));
-                confirmBtn.disabled = false;
-            });
-        });
-
         modal.classList.add("show");
         modal.setAttribute("aria-hidden", "false");
+
+        try {
+            grid.innerHTML = `<p style="margin:0;color:#5d778e;">Chargement des guichets disponibles...</p>`;
+            const freeCounters = await QueueService.getAvailableCounters(queue.id);
+            if (!Array.isArray(freeCounters) || freeCounters.length === 0) {
+                grid.innerHTML = `<p style="margin:0;color:#5d778e;">Aucun guichet disponible pour le moment.</p>`;
+                return;
+            }
+
+            grid.innerHTML = freeCounters.map((number) => `
+                <button class="counter" data-counter="${number}" type="button">
+                    Guichet ${number}
+                </button>
+            `).join("");
+
+            grid.querySelectorAll(".counter").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    grid.querySelectorAll(".counter").forEach((el) => el.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    stateLocal.selectedCounter = Number(btn.getAttribute("data-counter"));
+                    confirmBtn.disabled = false;
+                });
+            });
+        } catch (error) {
+            console.error("[MANAGER-DASHBOARD] counters load failed", error);
+            grid.innerHTML = `<p style="margin:0;color:#b91c1c;">Erreur chargement guichets.</p>`;
+        }
     }
 
     function closeCounterModal() {
@@ -174,16 +151,27 @@
         getEl("counterModal")?.addEventListener("click", (e) => {
             if (e.target?.id === "counterModal") closeCounterModal();
         });
-        getEl("confirmCounterBtn")?.addEventListener("click", () => {
+        getEl("confirmCounterBtn")?.addEventListener("click", async () => {
             if (!stateLocal.selectedQueue || !stateLocal.selectedCounter) return;
-            reserveCounter(stateLocal.selectedQueue.id, stateLocal.selectedCounter);
-            persistManagerContext();
-            closeCounterModal();
-            const params = new URLSearchParams({
-                queueId: String(stateLocal.selectedQueue.id),
-                counter: String(stateLocal.selectedCounter)
-            });
-            window.location.href = `ticket-management.html?${params.toString()}`;
+            const confirmBtn = getEl("confirmCounterBtn");
+            if (confirmBtn) confirmBtn.disabled = true;
+
+            try {
+                await QueueService.saveManagerContext(stateLocal.selectedQueue.id, stateLocal.selectedCounter);
+                persistManagerContext();
+                closeCounterModal();
+                window.location.href = "ticket-management.html";
+            } catch (error) {
+                console.error("[MANAGER-DASHBOARD] save context failed", error);
+                if (error?.status === 409) {
+                    showToast("Ce guichet vient d'etre occupe. Choisissez un autre guichet.", "warning");
+                    await openCounterModal(stateLocal.selectedQueue);
+                } else {
+                    showToast("Impossible de sauvegarder le contexte manager", "error");
+                }
+            } finally {
+                if (confirmBtn) confirmBtn.disabled = false;
+            }
         });
     }
 

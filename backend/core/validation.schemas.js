@@ -44,6 +44,12 @@ export const schemas = {
             description: Joi.string().allow('', null).optional()
         })
     },
+    managerContextSave: {
+        body: Joi.object({
+            queueId: Joi.alternatives().try(Joi.string(), Joi.number()).required(),
+            counter: Joi.number().integer().min(1).required()
+        })
+    },
     ticketCreate: {
         body: Joi.object({
             queueId: Joi.alternatives().try(Joi.string(), Joi.number()).required(),

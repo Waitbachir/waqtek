@@ -36,6 +36,14 @@ router.get('/:id/public', async (req, res) => {
 
 router.use(requireAuth, validateTenant);
 
+router.get('/manager/context', requirePermission('queues:read'), QueuesController.getManagerContext);
+router.post(
+    '/manager/context',
+    requirePermission('queues:write'),
+    validateRequest(schemas.managerContextSave),
+    QueuesController.saveManagerContext
+);
+router.get('/:queueId/counters/available', requirePermission('queues:read'), QueuesController.getAvailableCounters);
 router.post('/', requirePermission('queues:write'), validateRequest(schemas.queueCreate), QueuesController.create);
 router.get('/', requirePermission('queues:read'), QueuesController.getAll);
 router.get(

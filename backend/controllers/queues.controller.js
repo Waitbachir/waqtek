@@ -2,6 +2,7 @@ import Queue from '../models/queue.model.js';
 import Establishment from '../models/establishment.model.js';
 import Ticket from '../models/ticket.model.js';
 import logger from '../core/logger.js';
+import ManagerContextService from '../services/manager-context.service.js';
 
 class QueuesController {
     static getQueueEstablishmentId(queue) {
@@ -151,7 +152,7 @@ class QueuesController {
             if (!queue) return res.status(404).json({ message: "File d'attente non trouvee" });
 
             const isAdmin = req.user?.role === 'admin';
-            const queueEstablishmentId = this.getQueueEstablishmentId(queue);
+            const queueEstablishmentId = QueuesController.getQueueEstablishmentId(queue);
             if (!isAdmin && !req.tenant?.canAccessEstablishmentId?.(queueEstablishmentId)) {
                 return res.status(403).json({ message: 'Acces refuse (tenant)' });
             }
@@ -173,7 +174,7 @@ class QueuesController {
             }
 
             const isAdmin = req.user?.role === 'admin';
-            const queueEstablishmentId = this.getQueueEstablishmentId(queue);
+            const queueEstablishmentId = QueuesController.getQueueEstablishmentId(queue);
             if (!isAdmin && !req.tenant?.canAccessEstablishmentId?.(queueEstablishmentId)) {
                 return res.status(403).json({ message: 'Acces refuse (tenant)' });
             }
@@ -199,7 +200,7 @@ class QueuesController {
             }
 
             const isAdmin = req.user?.role === 'admin';
-            const queueEstablishmentId = this.getQueueEstablishmentId(queue);
+            const queueEstablishmentId = QueuesController.getQueueEstablishmentId(queue);
             if (!isAdmin && !req.tenant?.canAccessEstablishmentId?.(queueEstablishmentId)) {
                 return res.status(403).json({ message: 'Acces refuse (tenant)' });
             }
@@ -212,6 +213,102 @@ class QueuesController {
             });
         } catch (err) {
             logger.error('Queue delete error:', err);
+            return res.status(500).json({ message: err.message });
+        }
+    }
+
+    static async getAvailableCounters(req, res) {
+        try {
+            const { queueId } = req.params;
+            const queue = await Queue.findById(queueId);
+
+            if (!queue) {
+                return res.status(404).json({ message: "File d'attente non trouvee" });
+            }
+
+            const queueEstablishmentId = QueuesController.getQueueEstablishmentId(queue);
+            if (!req.tenant?.canAccessEstablishmentId?.(queueEstablishmentId)) {
+                return res.status(403).json({ message: 'Acces refuse (tenant)' });
+            }
+
+            const available = await ManagerContextService.getAvailableCounters(queueId, {
+                currentUserId: req.user?.id
+            });
+            const occupied = await ManagerContextService.getOccupiedCounters(queueId);
+
+            return res.status(200).json({
+                queueId: String(queueId),
+                availableCounters: available,
+                occupiedCounters: occupied
+            });
+        } catch (err) {
+            logger.error('Queue getAvailableCounters error:', err);
+            return res.status(500).json({ message: err.message });
+        }
+    }
+
+    static async saveManagerContext(req, res) {
+        try {
+            const userId = req.user?.id;
+            const { queueId, counter } = req.body;
+
+            const queue = await Queue.findById(queueId);
+            if (!queue) {
+                return res.status(404).json({ message: "File d'attente non trouvee" });
+            }
+
+            const queueEstablishmentId = QueuesController.getQueueEstablishmentId(queue);
+            if (!req.tenant?.canAccessEstablishmentId?.(queueEstablishmentId)) {
+                return res.status(403).json({ message: 'Acces refuse (tenant)' });
+            }
+
+            const available = await ManagerContextService.getAvailableCounters(queueId, {
+                currentUserId: userId
+            });
+            const normalizedCounter = Number(counter);
+            if (!available.includes(normalizedCounter)) {
+                return res.status(409).json({
+                    error: 'COUNTER_OCCUPIED',
+                    message: 'Ce guichet est deja occupe',
+                    availableCounters: available
+                });
+            }
+
+            const context = ManagerContextService.setContext({
+                userId,
+                establishmentId: queueEstablishmentId,
+                queueId,
+                counter: normalizedCounter
+            });
+
+            return res.status(200).json({ context });
+        } catch (err) {
+            logger.error('Queue saveManagerContext error:', err);
+            return res.status(500).json({ message: err.message });
+        }
+    }
+
+    static async getManagerContext(req, res) {
+        try {
+            const context = ManagerContextService.getContext(req.user?.id);
+            if (!context) {
+                return res.status(404).json({
+                    error: 'MANAGER_CONTEXT_NOT_FOUND',
+                    message: 'Aucun contexte manager actif'
+                });
+            }
+
+            if (!req.tenant?.canAccessEstablishmentId?.(context.establishmentId)) {
+                ManagerContextService.clearContext(req.user?.id);
+                return res.status(404).json({
+                    error: 'MANAGER_CONTEXT_NOT_FOUND',
+                    message: 'Aucun contexte manager actif'
+                });
+            }
+
+            return res.status(200).json({ context });
+        } catch (err) {
+            logger.error('Queue getManagerContext error:', err);
             return res.status(500).json({ message: err.message });
         }
     }

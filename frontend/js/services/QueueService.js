@@ -76,6 +76,27 @@ class QueueService {
         }
     }
 
+    static async getAvailableCounters(queueId) {
+        try {
+            const response = await apiClient.getQueueAvailableCounters(queueId);
+            const counters = Array.isArray(response?.availableCounters) ? response.availableCounters : [];
+            return counters;
+        } catch (error) {
+            console.error('❌ Erreur chargement guichets disponibles:', error);
+            throw error;
+        }
+    }
+
+    static async saveManagerContext(queueId, counter) {
+        const response = await apiClient.saveManagerContext({ queueId, counter });
+        return response?.context || null;
+    }
+
+    static async getManagerContext() {
+        const response = await apiClient.getManagerContext();
+        return response?.context || null;
+    }
+
     /**
      * Obtenir les tickets en attente d'une queue
      */

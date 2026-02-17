@@ -112,9 +112,9 @@
             font-weight: 500;
         }
 
-        .ticket-buttons {
+        .queues-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
             gap: 16px;
         }
 
@@ -140,58 +140,127 @@
             font-size: 0.98rem;
         }
 
-        .ticket-btn {
+        .queue-card {
             border: none;
-            border-radius: 18px;
-            min-height: clamp(110px, 17vh, 156px);
-            font-size: clamp(1.2rem, 2.4vw, 1.8rem);
-            font-weight: 700;
-            color: #ffffff;
+            border-radius: 16px;
+            min-height: clamp(100px, 14vh, 130px);
+            background: #f8fbff;
+            border: 1px solid var(--border);
             cursor: pointer;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
+            padding: 14px;
+            color: var(--title);
             transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
             touch-action: manipulation;
             user-select: none;
         }
 
-        .ticket-btn:active,
-        .ticket-btn.is-pressed {
+        .queue-card:active,
+        .queue-card.is-pressed {
             transform: scale(0.98);
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
 
-        .ticket-btn:focus-visible {
+        .queue-card:focus-visible {
             outline: 4px solid #8ec2e8;
             outline-offset: 2px;
         }
 
-        .ticket-btn svg {
-            width: clamp(26px, 3vw, 40px);
-            height: clamp(26px, 3vw, 40px);
-            flex: 0 0 auto;
+        .queue-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
         }
 
-        .ticket-normal {
-            background: linear-gradient(165deg, #3fa746 0%, var(--normal) 100%);
+        .queue-card-desc {
+            color: var(--muted);
+            font-size: 0.92rem;
         }
 
-        .ticket-normal:active,
-        .ticket-normal.is-pressed {
-            background: linear-gradient(165deg, #2d9134 0%, var(--normal-press) 100%);
+        .empty-queues {
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            text-align: center;
+            color: var(--muted);
         }
 
-        .ticket-vip {
-            color: #3a3100;
-            background: linear-gradient(165deg, #f9df72 0%, var(--vip) 100%);
+        .ticket-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(11, 37, 56, 0.46);
+            z-index: 9999;
+            padding: 16px;
         }
 
-        .ticket-vip:active,
-        .ticket-vip.is-pressed {
-            background: linear-gradient(165deg, #edcf4b 0%, var(--vip-press) 100%);
+        .ticket-modal.show {
+            display: flex;
+        }
+
+        .ticket-modal-card {
+            width: min(460px, 100%);
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .ticket-modal-title {
+            color: var(--title);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .ticket-modal-subtitle {
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        .ticket-options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .ticket-option {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--title);
+            background: #fff;
+        }
+
+        .ticket-option.local {
+            background: linear-gradient(165deg, #e4f7e6 0%, #d2efd6 100%);
+            border-color: #99d3a0;
+        }
+
+        .ticket-option.remote {
+            background: linear-gradient(165deg, #fff7d8 0%, #fcefc2 100%);
+            border-color: #ead28b;
+        }
+
+        .ticket-modal-cancel {
+            margin-top: 10px;
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            width: 100%;
+            background: #e4ebf3;
+            color: #27435a;
+            font-weight: 700;
+            cursor: pointer;
         }
 
         .feedback {
@@ -236,10 +305,6 @@
         }
 
         @media (max-width: 820px) {
-            .ticket-buttons {
-                grid-template-columns: 1fr;
-            }
-
             .topbar {
                 align-items: stretch;
                 flex-direction: column;
@@ -277,20 +342,10 @@
             <p id="contextValue" class="kiosk-context-value">Chargement de la configuration...</p>
         </section>
 
-        <section class="ticket-buttons" aria-label="Actions de ticket">
-            <button id="normalBtn" class="ticket-btn ticket-normal" type="button">
-                <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                    <path d="M3 8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v2a2 2 0 0 0 0 4v2a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-2a2 2 0 0 0 0-4V8zm5 1v6h2V9H8zm4 0v6h4v-2h-2v-1h2v-2h-4z"></path>
-                </svg>
-                <span id="normalLabel">Ticket Normal</span>
-            </button>
-
-            <button id="vipBtn" class="ticket-btn ticket-vip" type="button">
-                <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                    <path d="M4 18h16l-1.2-7.8a1 1 0 0 0-1.72-.57L14 13 12.2 6.8a1 1 0 0 0-1.92 0L8.5 13 6 9.63a1 1 0 0 0-1.78.58L4 18zm1.7 2a1 1 0 1 0 0 2h12.6a1 1 0 1 0 0-2H5.7z"></path>
-                </svg>
-                <span id="vipLabel">Ticket VIP</span>
-            </button>
+        <section id="queuesGrid" class="queues-grid" aria-label="Queues">
+        </section>
+        <section id="emptyQueues" class="empty-queues" style="display:none;">
+            Aucune queue disponible.
         </section>
 
         <section id="feedback" class="feedback" role="status">
@@ -300,6 +355,18 @@
 
         <p id="footerNote" class="footer-note">Ecran adapte aux tablettes et bornes tactiles.</p>
     </main>
+
+    <div id="ticketChoiceModal" class="ticket-modal" aria-hidden="true">
+        <div class="ticket-modal-card">
+            <h2 id="modalQueueTitle" class="ticket-modal-title">Choisir le type de ticket</h2>
+            <p id="modalSubtitle" class="ticket-modal-subtitle">Selectionnez une option</p>
+            <div class="ticket-options">
+                <button id="localTicketBtn" class="ticket-option local" type="button">Ticket Local (gratuit)</button>
+                <button id="remoteTicketBtn" class="ticket-option remote" type="button">Ticket avec acces distant (50 DA)</button>
+            </div>
+            <button id="cancelModalBtn" class="ticket-modal-cancel" type="button">Annuler</button>
+        </div>
+    </div>
 
     <script src="../js/config.js"></script>
     <script src="../js/core/StateManager.js"></script>

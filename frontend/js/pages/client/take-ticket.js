@@ -1,6 +1,5 @@
 (function () {
-    const POS_LOGIN_URL = "./enterprise/sign-in.html";
-    const KIOSK_CONTEXT_KEY = "waqtek_kiosk_context_v1";
+    const POS_LOGIN_URL = "../enterprise/sign-in.html";
     const KIOSK_LANG_KEY = "waqtek_kiosk_lang_v1";
 
     const kioskState = {
@@ -15,51 +14,61 @@
             pageTitle: "Prendre un ticket | WaQtek",
             langLabel: "Langue",
             title: "Prendre un ticket",
-            subtitle: "Appuyez pour obtenir votre ticket",
-            contextTitle: "Kiosk actif",
-            loadingContext: "Chargement de la configuration...",
-            noContext: "Aucune configuration de file disponible",
-            normalLabel: "Ticket Normal",
-            vipLabel: "Ticket VIP",
+            subtitle: "Selectionnez une queue pour continuer",
+            contextTitle: "Etablissement actif",
+            loadingContext: "Chargement...",
+            noContext: "Aucun etablissement configure",
             waitingTitle: "En attente",
-            waitingMessage: "Selectionnez un type de ticket pour continuer.",
+            waitingMessage: "Cliquez sur une queue pour prendre un ticket.",
             footerNote: "Ecran adapte aux tablettes et bornes tactiles.",
             successTitle: "Ticket cree",
-            normalCreated: "Votre ticket normal est pret : {ticket}",
-            vipCreated: "Votre ticket VIP est pret : {ticket}",
+            localCreated: "Votre ticket local est pret : {ticket}",
+            remoteCreated: "Votre ticket avec acces distant est pret : {ticket}",
             createError: "Erreur creation ticket",
-            missingContext: "Aucune file kiosk configuree.",
+            missingContext: "Aucune queue disponible pour cet etablissement.",
             missingToken: "Session expiree, reconnectez-vous.",
-            creatingNormal: "Creation ticket normal en cours...",
-            creatingVip: "Creation ticket VIP en cours...",
+            creatingLocal: "Creation ticket local en cours...",
+            creatingRemote: "Creation ticket avec acces distant en cours...",
             printPopupBlocked: "Popup bloquee: autorisez les popups pour imprimer le ticket.",
             printMode: "LOCAL GRATUIT",
-            printHint: "Conservez ce ticket jusqu'a l'appel."
+            printHint: "Conservez ce ticket jusqu'a l'appel.",
+            queueEmpty: "Aucune queue disponible.",
+            queueCardHint: "Toucher pour choisir le type de ticket",
+            modalTitle: "Choisir le type de ticket",
+            modalSubtitle: "Queue: {queue}",
+            localBtn: "Ticket Local (gratuit)",
+            remoteBtn: "Ticket avec acces distant (50 DA)",
+            cancelBtn: "Annuler"
         },
         ar: {
             pageTitle: "\u0627\u0633\u062d\u0628 \u062a\u0630\u0643\u0631\u062a\u0643 | WaQtek",
             langLabel: "\u0627\u0644\u0644\u063a\u0629",
             title: "\u0627\u0633\u062d\u0628 \u062a\u0630\u0643\u0631\u062a\u0643",
-            subtitle: "\u0627\u0636\u063a\u0637 \u0644\u0644\u062d\u0635\u0648\u0644 \u0639\u0644\u0649 \u062a\u0630\u0643\u0631\u062a\u0643",
-            contextTitle: "\u0627\u0644\u0643\u064a\u0648\u0633\u0643 \u0627\u0644\u0646\u0634\u0637",
-            loadingContext: "\u062c\u0627\u0631\u064a \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a...",
-            noContext: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0637\u0627\u0628\u0648\u0631 \u0645\u062a\u0627\u062d\u0629",
-            normalLabel: "\u062a\u0630\u0643\u0631\u0629 \u0639\u0627\u062f\u064a\u0629",
-            vipLabel: "\u062a\u0630\u0643\u0631\u0629 VIP",
+            subtitle: "\u0627\u062e\u062a\u0631 \u0627\u0644\u0637\u0627\u0628\u0648\u0631 \u0644\u0644\u0645\u062a\u0627\u0628\u0639\u0629",
+            contextTitle: "\u0627\u0644\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0646\u0634\u0637\u0629",
+            loadingContext: "\u062c\u0627\u0631\u064a \u0627\u0644\u062a\u062d\u0645\u064a\u0644...",
+            noContext: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0624\u0633\u0633\u0629 \u0645\u064f\u0647\u064a\u0623\u0629",
             waitingTitle: "\u0641\u064a \u0627\u0644\u0627\u0646\u062a\u0638\u0627\u0631",
-            waitingMessage: "\u0627\u062e\u062a\u0631 \u0646\u0648\u0639 \u0627\u0644\u062a\u0630\u0643\u0631\u0629 \u0644\u0644\u0645\u062a\u0627\u0628\u0639\u0629.",
+            waitingMessage: "\u0627\u0636\u063a\u0637 \u0639\u0644\u0649 \u0637\u0627\u0628\u0648\u0631 \u0644\u0623\u062e\u0630 \u062a\u0630\u0643\u0631\u0629.",
             footerNote: "\u0627\u0644\u0634\u0627\u0634\u0629 \u0645\u0647\u064a\u0623\u0629 \u0644\u0644\u0623\u062c\u0647\u0632\u0629 \u0627\u0644\u0644\u0648\u062d\u064a\u0629 \u0648\u0623\u0643\u0634\u0627\u0643 \u0627\u0644\u0644\u0645\u0633.",
             successTitle: "\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u062a\u0630\u0643\u0631\u0629",
-            normalCreated: "\u062a\u0630\u0643\u0631\u062a\u0643 \u0627\u0644\u0639\u0627\u062f\u064a\u0629 \u062c\u0627\u0647\u0632\u0629: {ticket}",
-            vipCreated: "\u062a\u0630\u0643\u0631\u062a\u0643 VIP \u062c\u0627\u0647\u0632\u0629: {ticket}",
+            localCreated: "\u062a\u0630\u0643\u0631\u062a\u0643 \u0627\u0644\u0645\u062d\u0644\u064a\u0629 \u062c\u0627\u0647\u0632\u0629: {ticket}",
+            remoteCreated: "\u062a\u0630\u0643\u0631\u062a\u0643 \u0645\u0639 \u0627\u0644\u0648\u0635\u0648\u0644 \u0627\u0644\u0628\u0639\u064a\u062f \u062c\u0627\u0647\u0632\u0629: {ticket}",
             createError: "\u062e\u0637\u0623 \u0623\u062b\u0646\u0627\u0621 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u062a\u0630\u0643\u0631\u0629",
-            missingContext: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0643\u064a\u0648\u0633\u0643.",
+            missingContext: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0637\u0648\u0627\u0628\u064a\u0631 \u0645\u062a\u0627\u062d\u0629 \u0644\u0647\u0630\u0647 \u0627\u0644\u0645\u0624\u0633\u0633\u0629.",
             missingToken: "\u0627\u0646\u062a\u0647\u062a \u0627\u0644\u062c\u0644\u0633\u0629\u060c \u064a\u0631\u062c\u0649 \u0625\u0639\u0627\u062f\u0629 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644.",
-            creatingNormal: "\u062c\u0627\u0631\u064a \u0625\u0646\u0634\u0627\u0621 \u062a\u0630\u0643\u0631\u0629 \u0639\u0627\u062f\u064a\u0629...",
-            creatingVip: "\u062c\u0627\u0631\u064a \u0625\u0646\u0634\u0627\u0621 \u062a\u0630\u0643\u0631\u0629 VIP...",
+            creatingLocal: "\u062c\u0627\u0631\u064a \u0625\u0646\u0634\u0627\u0621 \u062a\u0630\u0643\u0631\u0629 \u0645\u062d\u0644\u064a\u0629...",
+            creatingRemote: "\u062c\u0627\u0631\u064a \u0625\u0646\u0634\u0627\u0621 \u062a\u0630\u0643\u0631\u0629 \u0645\u0639 \u0648\u0635\u0648\u0644 \u0628\u0639\u064a\u062f...",
             printPopupBlocked: "\u0627\u0644\u0646\u0627\u0641\u0630\u0629 \u0645\u062d\u062c\u0648\u0628\u0629\u060c \u0633\u0645\u062d \u0628\u0627\u0644\u0637\u0628\u0627\u0639\u0629.",
             printMode: "\u0645\u062d\u0644\u064a \u0645\u062c\u0627\u0646\u064a",
-            printHint: "\u0627\u062d\u062a\u0641\u0638 \u0628\u0627\u0644\u062a\u0630\u0643\u0631\u0629 \u062d\u062a\u0649 \u064a\u062a\u0645 \u0627\u0633\u062a\u062f\u0639\u0627\u0624\u0643."
+            printHint: "\u0627\u062d\u062a\u0641\u0638 \u0628\u0627\u0644\u062a\u0630\u0643\u0631\u0629 \u062d\u062a\u0649 \u064a\u062a\u0645 \u0627\u0633\u062a\u062f\u0639\u0627\u0624\u0643.",
+            queueEmpty: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0637\u0648\u0627\u0628\u064a\u0631 \u0645\u062a\u0627\u062d\u0629.",
+            queueCardHint: "\u0627\u0636\u063a\u0637 \u0644\u0627\u062e\u062a\u064a\u0627\u0631 \u0646\u0648\u0639 \u0627\u0644\u062a\u0630\u0643\u0631\u0629",
+            modalTitle: "\u0627\u062e\u062a\u0631 \u0646\u0648\u0639 \u0627\u0644\u062a\u0630\u0643\u0631\u0629",
+            modalSubtitle: "\u0627\u0644\u0637\u0627\u0628\u0648\u0631: {queue}",
+            localBtn: "\u062a\u0630\u0643\u0631\u0629 \u0645\u062d\u0644\u064a\u0629 (\u0645\u062c\u0627\u0646\u064a)",
+            remoteBtn: "\u062a\u0630\u0643\u0631\u0629 \u0645\u0639 \u0648\u0635\u0648\u0644 \u0628\u0639\u064a\u062f (50 \u062f\u062c)",
+            cancelBtn: "\u0625\u0644\u063a\u0627\u0621"
         }
     };
 
@@ -95,33 +104,12 @@
         feedbackMessage.textContent = message;
     }
 
-    function addPressFeedback(button) {
-        button.classList.add("is-pressed");
-        window.setTimeout(() => button.classList.remove("is-pressed"), 140);
-    }
-
     function notify(message, type = "info") {
         if (typeof showToast === "function") {
             showToast(message, type);
             return;
         }
         console.log(`[KIOSK] ${message}`);
-    }
-
-    function parseSavedContext() {
-        try {
-            const raw = localStorage.getItem(KIOSK_CONTEXT_KEY);
-            return raw ? JSON.parse(raw) : {};
-        } catch (_) {
-            return {};
-        }
-    }
-
-    function saveContext() {
-        localStorage.setItem(KIOSK_CONTEXT_KEY, JSON.stringify({
-            establishmentId: kioskState.selectedEstablishmentId || null,
-            queueId: kioskState.selectedQueueId || null
-        }));
     }
 
     function getQueryParam(name) {
@@ -143,41 +131,6 @@
         return true;
     }
 
-    async function loadEstablishmentsForConnectedAccount() {
-        const list = await EstablishmentService.getEstablishments();
-        const filtered = EstablishmentService.filterByCurrentUser(list);
-        kioskState.establishments = Array.isArray(filtered) ? filtered : [];
-    }
-
-    async function loadQueuesForEstablishment(establishmentId) {
-        kioskState.selectedQueueId = null;
-        if (!establishmentId) {
-            kioskState.queues = [];
-            return;
-        }
-        const list = await QueueService.getQueuesByEstablishment(establishmentId);
-        kioskState.queues = Array.isArray(list) ? list : [];
-    }
-
-    function pickKioskContext() {
-        const saved = parseSavedContext();
-        const requestedEst = getQueryParam("establishmentId") || getQueryParam("estId");
-        const requestedQueue = getQueryParam("queueId");
-
-        const estByParam = kioskState.establishments.find((e) => String(e.id) === String(requestedEst));
-        const estBySaved = kioskState.establishments.find((e) => String(e.id) === String(saved.establishmentId));
-        const selectedEst = estByParam || estBySaved || kioskState.establishments[0] || null;
-
-        kioskState.selectedEstablishmentId = selectedEst?.id || null;
-
-        const queueByParam = kioskState.queues.find((q) => String(q.id) === String(requestedQueue));
-        const queueBySaved = kioskState.queues.find((q) => String(q.id) === String(saved.queueId));
-        const selectedQueue = queueByParam || queueBySaved || kioskState.queues[0] || null;
-
-        kioskState.selectedQueueId = selectedQueue?.id || null;
-        saveContext();
-    }
-
     function getSelectedEstablishment() {
         return kioskState.establishments.find((e) => String(e.id) === String(kioskState.selectedEstablishmentId)) || null;
     }
@@ -189,33 +142,89 @@
     function renderContext() {
         const contextValue = getEl("contextValue");
         if (!contextValue) return;
-
         const est = getSelectedEstablishment();
-        const queue = getSelectedQueue();
-
-        if (!est || !queue) {
-            contextValue.textContent = t("noContext");
-            return;
-        }
-        contextValue.textContent = `${est.name || est.id} | ${queue.name || queue.id}`;
+        contextValue.textContent = est ? (est.name || est.id) : t("noContext");
     }
 
-    function setButtonsDisabled(disabled) {
-        const normalBtn = getEl("normalBtn");
-        const vipBtn = getEl("vipBtn");
-        if (normalBtn) normalBtn.disabled = !!disabled;
-        if (vipBtn) vipBtn.disabled = !!disabled;
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text ?? "";
+        return div.innerHTML;
+    }
+
+    function renderQueues() {
+        const grid = getEl("queuesGrid");
+        const empty = getEl("emptyQueues");
+        if (!grid || !empty) return;
+
+        if (!kioskState.queues.length) {
+            grid.innerHTML = "";
+            empty.style.display = "block";
+            empty.textContent = t("queueEmpty");
+            return;
+        }
+
+        empty.style.display = "none";
+        grid.innerHTML = kioskState.queues.map((queue) => `
+            <button class="queue-card" type="button" data-queue-id="${queue.id}">
+                <span class="queue-card-title">${escapeHtml(queue.name || `Queue ${queue.id}`)}</span>
+                <span class="queue-card-desc">${escapeHtml(queue.description || t("queueCardHint"))}</span>
+            </button>
+        `).join("");
+
+        grid.querySelectorAll(".queue-card").forEach((card) => {
+            card.addEventListener("click", () => {
+                const queueId = card.getAttribute("data-queue-id");
+                kioskState.selectedQueueId = queueId;
+                openChoiceModal();
+            });
+        });
+    }
+
+    function openChoiceModal() {
+        const modal = getEl("ticketChoiceModal");
+        const title = getEl("modalQueueTitle");
+        const subtitle = getEl("modalSubtitle");
+        const localBtn = getEl("localTicketBtn");
+        const remoteBtn = getEl("remoteTicketBtn");
+        const cancelBtn = getEl("cancelModalBtn");
+        const queue = getSelectedQueue();
+        if (!modal || !title || !subtitle || !localBtn || !remoteBtn || !cancelBtn || !queue) return;
+
+        title.textContent = t("modalTitle");
+        subtitle.textContent = t("modalSubtitle").replace("{queue}", queue.name || queue.id);
+        localBtn.textContent = t("localBtn");
+        remoteBtn.textContent = t("remoteBtn");
+        cancelBtn.textContent = t("cancelBtn");
+
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeChoiceModal() {
+        const modal = getEl("ticketChoiceModal");
+        if (!modal) return;
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden", "true");
+    }
+
+    function setQueuesDisabled(disabled) {
+        document.querySelectorAll(".queue-card").forEach((btn) => {
+            btn.disabled = !!disabled;
+        });
+        const localBtn = getEl("localTicketBtn");
+        const remoteBtn = getEl("remoteTicketBtn");
+        if (localBtn) localBtn.disabled = !!disabled;
+        if (remoteBtn) remoteBtn.disabled = !!disabled;
     }
 
     function openPrintWindow() {
         const popup = window.open("", "_blank", "width=420,height=620");
-        if (!popup) {
-            notify(t("printPopupBlocked"), "warning");
-        }
+        if (!popup) notify(t("printPopupBlocked"), "warning");
         return popup;
     }
 
-    function printNormalTicket(ticket) {
+    function printLocalTicket(ticket) {
         const printWindow = openPrintWindow();
         if (!printWindow) return;
 
@@ -267,46 +276,79 @@
         window.location.href = `payment-pending.html?${params.toString()}`;
     }
 
-    async function createKioskTicket(remoteAccess) {
+    async function createTicket(remoteAccess) {
         if (!kioskState.selectedQueueId) {
             showUiFeedback("warn", t("waitingTitle"), t("missingContext"));
-            notify(t("missingContext"), "warning");
             return;
         }
 
-        const pendingText = remoteAccess ? t("creatingVip") : t("creatingNormal");
-        showUiFeedback("", t("waitingTitle"), pendingText);
-        setButtonsDisabled(true);
+        showUiFeedback("", t("waitingTitle"), remoteAccess ? t("creatingRemote") : t("creatingLocal"));
+        setQueuesDisabled(true);
 
         try {
             const response = await apiClient.createPosTicketPublic(kioskState.selectedQueueId, remoteAccess);
             const ticket = response?.ticket;
-            if (!ticket) {
-                throw new Error(t("createError"));
-            }
+            if (!ticket) throw new Error(t("createError"));
 
-            const template = remoteAccess ? t("vipCreated") : t("normalCreated");
-            showUiFeedback("ok", t("successTitle"), template.replace("{ticket}", ticket.number || "-"));
-
-            notify(
-                remoteAccess ? `Ticket VIP ${ticket.number} cree` : `Ticket normal ${ticket.number} cree`,
-                "success"
-            );
+            const message = remoteAccess ? t("remoteCreated") : t("localCreated");
+            showUiFeedback("ok", t("successTitle"), message.replace("{ticket}", ticket.number || "-"));
 
             if (remoteAccess) {
                 window.setTimeout(() => redirectToPaymentWaiting(ticket, response?.paymentAmount || 50), 600);
             } else {
-                printNormalTicket(ticket);
+                printLocalTicket(ticket);
             }
+
+            closeChoiceModal();
         } catch (error) {
-            console.error("[TAKE-TICKET] create error:", error);
+            console.error("[TAKE-TICKET] create error", error);
+            showUiFeedback("warn", t("createError"), error?.message || t("createError"));
+            if (error?.status === 401 || error?.status === 403) {
+                redirectToLogin();
+            }
+        } finally {
+            setQueuesDisabled(false);
+        }
+    }
+
+    async function bootstrapKiosk() {
+        try {
+            showUiFeedback("", t("waitingTitle"), t("loadingContext"));
+            const list = await EstablishmentService.getEstablishments();
+            const filtered = EstablishmentService.filterByCurrentUser(list);
+            kioskState.establishments = Array.isArray(filtered) ? filtered : [];
+
+            const requestedEst = getQueryParam("establishmentId") || getQueryParam("estId");
+            const selectedEst = kioskState.establishments.find((e) => String(e.id) === String(requestedEst))
+                || kioskState.establishments[0]
+                || null;
+
+            kioskState.selectedEstablishmentId = selectedEst?.id || null;
+            renderContext();
+
+            if (!kioskState.selectedEstablishmentId) {
+                renderQueues();
+                showUiFeedback("warn", t("waitingTitle"), t("noContext"));
+                return;
+            }
+
+            const queues = await QueueService.getQueuesByEstablishment(kioskState.selectedEstablishmentId);
+            kioskState.queues = Array.isArray(queues) ? queues : [];
+            renderQueues();
+
+            if (!kioskState.queues.length) {
+                showUiFeedback("warn", t("waitingTitle"), t("missingContext"));
+                return;
+            }
+
+            showUiFeedback("", t("waitingTitle"), t("waitingMessage"));
+        } catch (error) {
+            console.error("[TAKE-TICKET] bootstrap error", error);
             showUiFeedback("warn", t("createError"), error?.message || t("createError"));
             notify(error?.message || t("createError"), "error");
             if (error?.status === 401 || error?.status === 403) {
                 redirectToLogin();
             }
-        } finally {
-            setButtonsDisabled(false);
         }
     }
 
@@ -318,8 +360,6 @@
         getEl("title").textContent = dict.title;
         getEl("subtitle").textContent = dict.subtitle;
         getEl("contextTitle").textContent = dict.contextTitle;
-        getEl("normalLabel").textContent = dict.normalLabel;
-        getEl("vipLabel").textContent = dict.vipLabel;
         getEl("footerNote").textContent = dict.footerNote;
 
         const feedback = getEl("feedback");
@@ -327,62 +367,21 @@
             showUiFeedback("", dict.waitingTitle, dict.waitingMessage);
         }
 
-        renderContext();
         localStorage.setItem(KIOSK_LANG_KEY, lang);
-    }
-
-    async function bootstrapKiosk() {
-        try {
-            showUiFeedback("", t("waitingTitle"), t("loadingContext"));
-            setButtonsDisabled(true);
-
-            await loadEstablishmentsForConnectedAccount();
-            const targetEstablishmentId = getQueryParam("establishmentId") || getQueryParam("estId") || parseSavedContext().establishmentId;
-            kioskState.selectedEstablishmentId =
-                kioskState.establishments.find((e) => String(e.id) === String(targetEstablishmentId))?.id ||
-                kioskState.establishments[0]?.id ||
-                null;
-
-            await loadQueuesForEstablishment(kioskState.selectedEstablishmentId);
-            pickKioskContext();
-            renderContext();
-
-            if (!kioskState.selectedQueueId) {
-                showUiFeedback("warn", t("waitingTitle"), t("missingContext"));
-                notify(t("missingContext"), "warning");
-                return;
-            }
-
-            showUiFeedback("", t("waitingTitle"), t("waitingMessage"));
-        } catch (error) {
-            console.error("[TAKE-TICKET] bootstrap error:", error);
-            showUiFeedback("warn", t("createError"), error?.message || t("createError"));
-            notify(error?.message || t("createError"), "error");
-            if (error?.status === 401 || error?.status === 403) {
-                redirectToLogin();
-            }
-        } finally {
-            setButtonsDisabled(false);
-        }
+        renderContext();
+        renderQueues();
     }
 
     function bindEvents() {
-        const langSelect = getEl("langSelect");
-        const normalBtn = getEl("normalBtn");
-        const vipBtn = getEl("vipBtn");
-
-        langSelect?.addEventListener("change", function () {
+        getEl("langSelect")?.addEventListener("change", () => {
             applyLanguage(getCurrentLang());
         });
 
-        normalBtn?.addEventListener("click", function () {
-            addPressFeedback(normalBtn);
-            createKioskTicket(false);
-        });
-
-        vipBtn?.addEventListener("click", function () {
-            addPressFeedback(vipBtn);
-            createKioskTicket(true);
+        getEl("localTicketBtn")?.addEventListener("click", () => createTicket(false));
+        getEl("remoteTicketBtn")?.addEventListener("click", () => createTicket(true));
+        getEl("cancelModalBtn")?.addEventListener("click", closeChoiceModal);
+        getEl("ticketChoiceModal")?.addEventListener("click", (e) => {
+            if (e.target?.id === "ticketChoiceModal") closeChoiceModal();
         });
     }
 

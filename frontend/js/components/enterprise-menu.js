@@ -64,7 +64,7 @@
     if (markerIndex >= 0) {
       return href.slice(0, markerIndex + marker.length);
     }
-    return new URL("./", window.location.href).href;
+    return `${window.location.origin}/`;
   }
 
   function resolvePageUrl(path) {

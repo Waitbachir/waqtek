@@ -1,0 +1,107 @@
+.waqtek-onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 18, 29, 0.56);
+  z-index: 10000;
+}
+
+.waqtek-onboarding-target {
+  position: relative !important;
+  z-index: 10001 !important;
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px #7ac3ff, 0 0 0 9999px rgba(6, 18, 29, 0.48);
+  transition: box-shadow 0.2s ease;
+}
+
+.waqtek-onboarding-card {
+  position: fixed;
+  width: min(380px, calc(100vw - 24px));
+  background: #ffffff;
+  border: 1px solid #d9e5f0;
+  border-radius: 12px;
+  box-shadow: 0 14px 36px rgba(3, 25, 44, 0.24);
+  z-index: 10002;
+  padding: 14px;
+}
+
+.waqtek-onboarding-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.waqtek-onboarding-title {
+  margin: 0;
+  color: #0b324f;
+  font-weight: 700;
+  font-size: 1.04rem;
+}
+
+.waqtek-onboarding-close {
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  color: #506b80;
+  cursor: pointer;
+}
+
+.waqtek-onboarding-content {
+  margin: 0 0 12px;
+  color: #37576d;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.waqtek-onboarding-progress {
+  color: #6f8799;
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+}
+
+.waqtek-onboarding-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.waqtek-onboarding-btn {
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.waqtek-onboarding-btn.secondary {
+  background: #e6eef5;
+  color: #1f4159;
+}
+
+.waqtek-onboarding-btn.primary {
+  background: #0f5f8f;
+  color: #fff;
+}
+
+.waqtek-onboarding-launcher {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9997;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: #0f5f8f;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(7, 35, 60, 0.24);
+}
+
+@media (max-width: 640px) {
+  .waqtek-onboarding-launcher {
+    right: 10px;
+    bottom: 10px;
+  }
+}

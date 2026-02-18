@@ -26,6 +26,7 @@ const state = {
   establishments: [],
   queues: [],
   savedVideos: [],
+  ticketsByQueue: new Map(),
   selectedEst: null,
   selectedQueue: null,
   allQueuesMode: false,
@@ -50,6 +51,12 @@ const state = {
     videoOpacity: 1,
     hideSettingsButton: false
   }
+};
+
+const renderState = {
+  waitingNodes: new Map(),
+  calledNodes: new Map(),
+  boardQueueNodes: new Map()
 };
 
 const QUEUE_PALETTE = [
@@ -193,7 +200,6 @@ function startWsMonitor() {
     if (!isConnected || staleMs > WS_ACTIVITY_TIMEOUT_MS) {
       setConnectionStatus(true);
       scheduleWsReconnect(!isConnected ? "disconnected" : "stale_activity");
-      refreshQueue().catch(() => {});
     }
   }, WS_MONITOR_INTERVAL_MS);
 }
@@ -463,7 +469,7 @@ function initializeRealtimeSync() {
     state.wsReconnectAttempt = 0;
     touchRealtimeActivity();
     setConnectionStatus(false);
-    refreshQueue().catch(() => {});
+    seedInitialTickets().catch(() => {});
   });
 
   wsConn.onDisconnect(() => {
@@ -502,82 +508,6 @@ function updateHeader() {
   }
 }
 
-function renderWaiting(tickets) {
-  const container = document.getElementById("waitingList");
-  const countEl = document.getElementById("waitingCount");
-  if (!container) return;
-
-  const fullList = Array.isArray(tickets) ? tickets : [];
-  const list = fullList.slice(0, 12);
-
-  container.innerHTML = list.map((t, i) => `
-    <div class="bg-slate-700/70 rounded-lg px-3 py-4 text-center border border-slate-600 ${i === 0 ? "ring-2 ring-indigo-400" : ""}">
-      <div class="text-3xl font-bold">${escapeHtml(t.number || "-")}</div>
-      <p class="text-xs text-slate-400 mt-1">${escapeHtml(t.__queueName || "-")}</p>
-      <p class="text-xs text-slate-400 mt-1">Position ${i + 1}</p>
-    </div>
-  `).join("");
-
-  if (countEl) countEl.textContent = `${fullList.length} en attente`;
-}
-
-function renderCalled(ticket) {
-  const container = document.getElementById("calledList");
-  if (!container) return;
-
-  const list = Array.isArray(ticket) ? ticket : (ticket ? [ticket] : []);
-  if (list.length === 0) {
-    container.className = "grid gap-3";
-    container.innerHTML = '<p class="text-slate-500 text-sm">Aucun ticket appele</p>';
-    return;
-  }
-
-  if (list.length <= 8) {
-    container.className = "grid gap-3 grid-cols-1";
-  } else if (list.length <= 20) {
-    container.className = "grid gap-2 grid-cols-2";
-  } else {
-    container.className = "grid gap-2 grid-cols-3";
-  }
-
-  let cardClass = "rounded-lg p-4 text-slate-900 flex items-center justify-between shadow";
-  let numberClass = "text-3xl font-black leading-none";
-  let sideClass = "text-xl font-bold";
-  let messageClass = "text-xs mt-1 opacity-90";
-
-  if (list.length >= 7 && list.length <= 10) {
-    cardClass = "rounded-lg p-3 text-slate-900 flex items-center justify-between shadow";
-    numberClass = "text-2xl font-black leading-none";
-    sideClass = "text-lg font-bold";
-    messageClass = "text-[11px] mt-1 opacity-90";
-  } else if (list.length >= 11 && list.length <= 16) {
-    cardClass = "rounded-lg p-2.5 text-slate-900 flex items-center justify-between shadow";
-    numberClass = "text-xl font-black leading-none";
-    sideClass = "text-base font-bold";
-    messageClass = "text-[10px] mt-1 opacity-90";
-  } else if (list.length > 16) {
-    cardClass = "rounded-lg p-2 text-slate-900 flex items-center justify-between shadow";
-    numberClass = "text-lg font-black leading-none";
-    sideClass = "text-sm font-bold";
-    messageClass = "text-[9px] mt-1 opacity-90";
-  }
-
-  const palette = ["bg-emerald-500", "bg-amber-500", "bg-sky-500", "bg-fuchsia-500", "bg-rose-500", "bg-indigo-500"];
-  container.innerHTML = list.map((t, i) => `
-    <div class="${cardClass} ${palette[i % palette.length]}">
-      <div>
-        <p class="text-xs uppercase tracking-wide opacity-80">Queue ${escapeHtml(t.__queueName || "-")}</p>
-        <p class="${numberClass}">${escapeHtml(t.number || "-")}</p>
-        <p class="${messageClass}">Client de la queue ${escapeHtml(t.__queueName || "-")}, presentez-vous au guichet ${escapeHtml(t.counter || "-")}.</p>
-      </div>
-      <div class="text-right">
-        <p class="text-xs uppercase tracking-wide opacity-80">Guichet</p>
-        <p class="${sideClass}">${escapeHtml(t.counter || "-")}</p>
-      </div>
-    </div>
-  `).join("");
-}
-
 function renderCalledBoard(waitingTickets) {
   const board = document.getElementById("calledBoard");
   if (!board) return;
@@ -586,7 +516,8 @@ function renderCalledBoard(waitingTickets) {
 
   if (list.length === 0) {
     board.style.gridTemplateColumns = "";
-    board.innerHTML = "";
+    board.replaceChildren();
+    renderState.boardQueueNodes.clear();
     return;
   }
 
@@ -599,31 +530,60 @@ function renderCalledBoard(waitingTickets) {
 
   const queueNames = Array.from(grouped.keys());
   board.style.gridTemplateColumns = `repeat(${queueNames.length}, minmax(0, 1fr))`;
+  const wanted = new Set();
 
-  board.innerHTML = queueNames.map((queueName, idx) => {
+  queueNames.forEach((queueName, idx) => {
+    const key = String(queueName);
+    wanted.add(key);
     const queueTickets = grouped.get(queueName) || [];
     const nextTwo = queueTickets.slice(0, 2);
     const palette = getQueuePalette(queueName);
+    let wrapper = renderState.boardQueueNodes.get(key);
+    if (!wrapper) {
+      wrapper = document.createElement("div");
+      renderState.boardQueueNodes.set(key, wrapper);
+    }
 
-    const ticketCardsHtml = nextTwo.map((t) => `
-      <div class="rounded-lg border ${palette.chip} px-3 py-3">
-        <p class="text-white font-bold text-2xl md:text-4xl leading-tight">No ${escapeHtml(t.number || "-")}</p>
-        <p class="text-white/90 font-semibold text-base md:text-lg mt-1 leading-tight">PROCHAIN</p>
-      </div>
-    `).join("");
+    wrapper.className = `${idx > 0 ? "border-l border-white/20 md:pl-2" : ""} rounded-xl border p-2 ${palette.panel}`;
+    wrapper.replaceChildren();
 
-    const dividerClass = idx > 0 ? "border-l border-white/20 md:pl-2" : "";
-    return `
-      <div class="${dividerClass} rounded-xl border p-2 ${palette.panel}">
-        <p class="text-lg md:text-xl uppercase tracking-wide text-white mb-2 font-semibold">Queue ${escapeHtml(queueName)}</p>
-        <div class="rounded-lg border ${palette.chip} p-2">
-          <div class="grid grid-cols-2 gap-2">
-            ${ticketCardsHtml}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
+    const title = document.createElement("p");
+    title.className = "text-lg md:text-xl uppercase tracking-wide text-white mb-2 font-semibold";
+    title.textContent = `Queue ${queueName}`;
+    wrapper.appendChild(title);
+
+    const outer = document.createElement("div");
+    outer.className = `rounded-lg border ${palette.chip} p-2`;
+    const grid = document.createElement("div");
+    grid.className = "grid grid-cols-2 gap-2";
+
+    const fragment = document.createDocumentFragment();
+    nextTwo.forEach((t) => {
+      const card = document.createElement("div");
+      card.className = `rounded-lg border ${palette.chip} px-3 py-3`;
+      const n = document.createElement("p");
+      n.className = "text-white font-bold text-2xl md:text-4xl leading-tight";
+      n.textContent = `No ${t.number || "-"}`;
+      const p = document.createElement("p");
+      p.className = "text-white/90 font-semibold text-base md:text-lg mt-1 leading-tight";
+      p.textContent = "PROCHAIN";
+      card.appendChild(n);
+      card.appendChild(p);
+      fragment.appendChild(card);
+    });
+    grid.appendChild(fragment);
+    outer.appendChild(grid);
+    wrapper.appendChild(outer);
+    board.appendChild(wrapper);
+  });
+
+  [...renderState.boardQueueNodes.keys()].forEach((k) => {
+    if (!wanted.has(k)) {
+      const node = renderState.boardQueueNodes.get(k);
+      if (node && node.parentNode) node.parentNode.removeChild(node);
+      renderState.boardQueueNodes.delete(k);
+    }
+  });
 }
 
 function queueIdsToDisplay() {
@@ -633,59 +593,255 @@ function queueIdsToDisplay() {
   return state.selectedQueue ? [state.selectedQueue] : [];
 }
 
-async function refreshQueue() {
-  if (state.refreshInFlight) return;
-  state.refreshInFlight = true;
-  const refreshGuard = setTimeout(() => { setConnectionStatus(true); }, REFRESH_FALLBACK_TIMEOUT_MS);
+function getTicketId(ticket) {
+  return String(ticket?.id || "").trim();
+}
+
+function normalizeTicketForDisplay(ticket, queueNameMap) {
+  const queueId = String(ticket?.queue_id || ticket?.queueId || ticket?.queueid || ticket?.__queueId || "");
+  return {
+    ...ticket,
+    __queueId: queueId,
+    __queueName: ticket?.__queueName || queueNameMap.get(queueId) || queueId || "-"
+  };
+}
+
+function createWaitingCard(ticket, index) {
+  const card = document.createElement("div");
+  card.id = `waiting-${getTicketId(ticket)}`;
+  card.dataset.ticketId = getTicketId(ticket);
+  card.className = `bg-slate-700/70 rounded-lg px-3 py-4 text-center border border-slate-600 ${index === 0 ? "ring-2 ring-indigo-400" : ""}`;
+
+  const num = document.createElement("div");
+  num.className = "text-3xl font-bold";
+  num.textContent = String(ticket.number || "-");
+
+  const queue = document.createElement("p");
+  queue.className = "text-xs text-slate-400 mt-1";
+  queue.textContent = String(ticket.__queueName || "-");
+
+  const pos = document.createElement("p");
+  pos.className = "text-xs text-slate-400 mt-1";
+  pos.textContent = `Position ${index + 1}`;
+
+  card.appendChild(num);
+  card.appendChild(queue);
+  card.appendChild(pos);
+  return card;
+}
+
+function updateWaitingCardNode(card, ticket, index) {
+  if (!card) return;
+  card.className = `bg-slate-700/70 rounded-lg px-3 py-4 text-center border border-slate-600 ${index === 0 ? "ring-2 ring-indigo-400" : ""}`;
+  const [num, queue, pos] = card.children;
+  if (num) num.textContent = String(ticket.number || "-");
+  if (queue) queue.textContent = String(ticket.__queueName || "-");
+  if (pos) pos.textContent = `Position ${index + 1}`;
+}
+
+function createCalledCard(ticket, index, total) {
+  let cardClass = "rounded-lg p-4 text-slate-900 flex items-center justify-between shadow";
+  let numberClass = "text-3xl font-black leading-none";
+  let sideClass = "text-xl font-bold";
+  let messageClass = "text-xs mt-1 opacity-90";
+
+  if (total >= 7 && total <= 10) {
+    cardClass = "rounded-lg p-3 text-slate-900 flex items-center justify-between shadow";
+    numberClass = "text-2xl font-black leading-none";
+    sideClass = "text-lg font-bold";
+    messageClass = "text-[11px] mt-1 opacity-90";
+  } else if (total >= 11 && total <= 16) {
+    cardClass = "rounded-lg p-2.5 text-slate-900 flex items-center justify-between shadow";
+    numberClass = "text-xl font-black leading-none";
+    sideClass = "text-base font-bold";
+    messageClass = "text-[10px] mt-1 opacity-90";
+  } else if (total > 16) {
+    cardClass = "rounded-lg p-2 text-slate-900 flex items-center justify-between shadow";
+    numberClass = "text-lg font-black leading-none";
+    sideClass = "text-sm font-bold";
+    messageClass = "text-[9px] mt-1 opacity-90";
+  }
+
+  const palette = ["bg-emerald-500", "bg-amber-500", "bg-sky-500", "bg-fuchsia-500", "bg-rose-500", "bg-indigo-500"];
+  const card = document.createElement("div");
+  card.id = `called-${getTicketId(ticket)}`;
+  card.dataset.ticketId = getTicketId(ticket);
+  card.className = `${cardClass} ${palette[index % palette.length]}`;
+
+  const left = document.createElement("div");
+  const q = document.createElement("p");
+  q.className = "text-xs uppercase tracking-wide opacity-80";
+  q.textContent = `Queue ${ticket.__queueName || "-"}`;
+  const num = document.createElement("p");
+  num.className = numberClass;
+  num.textContent = String(ticket.number || "-");
+  const msg = document.createElement("p");
+  msg.className = messageClass;
+  msg.textContent = `Client de la queue ${ticket.__queueName || "-"}, presentez-vous au guichet ${ticket.counter || "-"}.`;
+  left.appendChild(q);
+  left.appendChild(num);
+  left.appendChild(msg);
+
+  const right = document.createElement("div");
+  right.className = "text-right";
+  const lbl = document.createElement("p");
+  lbl.className = "text-xs uppercase tracking-wide opacity-80";
+  lbl.textContent = "Guichet";
+  const cnt = document.createElement("p");
+  cnt.className = sideClass;
+  cnt.textContent = String(ticket.counter || "-");
+  right.appendChild(lbl);
+  right.appendChild(cnt);
+
+  card.appendChild(left);
+  card.appendChild(right);
+  return card;
+}
+
+function updateCalledContainerLayout(container, total) {
+  if (!container) return;
+  if (total <= 8) {
+    container.className = "grid gap-3 grid-cols-1";
+  } else if (total <= 20) {
+    container.className = "grid gap-2 grid-cols-2";
+  } else {
+    container.className = "grid gap-2 grid-cols-3";
+  }
+}
+
+function updateCalledCardNode(card, ticket, index, total) {
+  const fresh = createCalledCard(ticket, index, total);
+  card.className = fresh.className;
+  card.innerHTML = fresh.innerHTML;
+}
+
+function syncNodeList(container, nodeMap, list, keyPrefix, createNode, updateNode) {
+  if (!container) return;
+
+  const wanted = new Set();
+
+  list.forEach((item, index) => {
+    const id = `${keyPrefix}${getTicketId(item)}`;
+    wanted.add(id);
+    let node = nodeMap.get(id);
+    if (!node) {
+      node = createNode(item, index);
+      nodeMap.set(id, node);
+    } else {
+      if (typeof updateNode === "function") {
+        updateNode(node, item, index);
+      }
+    }
+    container.appendChild(node);
+  });
+
+  [...nodeMap.keys()].forEach((id) => {
+    if (!wanted.has(id)) {
+      const node = nodeMap.get(id);
+      if (node && node.parentNode) node.parentNode.removeChild(node);
+      nodeMap.delete(id);
+    }
+  });
+}
+
+function renderTicketLists() {
+  const queueIds = new Set(queueIdsToDisplay().map((id) => String(id)));
+  const queueNameMap = new Map((state.queues || []).map((q) => [String(q.id), q.name || q.id]));
+  const allWaiting = [];
+  const allCalled = [];
+
+  const source = state.ticketsByQueue instanceof Map ? state.ticketsByQueue : new Map();
+  source.forEach((ticketMap, queueId) => {
+    if (!queueIds.has(String(queueId))) return;
+    (ticketMap instanceof Map ? [...ticketMap.values()] : []).forEach((ticket) => {
+      const normalized = normalizeTicketForDisplay(ticket, queueNameMap);
+      const status = String(normalized.status || "").toLowerCase();
+      if (status === "called") allCalled.push(normalized);
+      if (status === "waiting" || !status) allWaiting.push(normalized);
+    });
+  });
+
+  allWaiting.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+  allCalled.sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0));
+
+  const waitingContainer = document.getElementById("waitingList");
+  const calledContainer = document.getElementById("calledList");
+  const countEl = document.getElementById("waitingCount");
+  if (countEl) countEl.textContent = `${allWaiting.length} en attente`;
+
+  syncNodeList(
+    waitingContainer,
+    renderState.waitingNodes,
+    allWaiting.slice(0, 12),
+    "waiting-",
+    (item, index) => createWaitingCard(item, index),
+    (node, item, index) => updateWaitingCardNode(node, item, index)
+  );
+  updateCalledContainerLayout(calledContainer, allCalled.length);
+  syncNodeList(
+    calledContainer,
+    renderState.calledNodes,
+    allCalled,
+    "called-",
+    (item, index) => createCalledCard(item, index, allCalled.length),
+    (node, item, index) => updateCalledCardNode(node, item, index, allCalled.length)
+  );
+
+  detectAndChime(allCalled);
+  renderCalledBoard(allWaiting);
+}
+
+function updateSingleTicket(ticket) {
+  const id = getTicketId(ticket);
+  if (!id) return;
+
+  const queueId = String(ticket?.queue_id || ticket?.queueId || ticket?.queueid || "");
+  if (!queueId) return;
+
+  if (!(state.ticketsByQueue instanceof Map)) {
+    state.ticketsByQueue = new Map();
+  }
+  if (!state.ticketsByQueue.has(queueId)) {
+    state.ticketsByQueue.set(queueId, new Map());
+  }
+
+  const status = String(ticket.status || "").toLowerCase();
+  const isTerminal = status === "served" || status === "cancelled" || status === "missed" || ticket.deleted === true;
+  const queueMap = state.ticketsByQueue.get(queueId);
+  if (isTerminal) {
+    queueMap.delete(id);
+  } else {
+    queueMap.set(id, ticket);
+  }
+
+  renderTicketLists();
+}
+
+async function seedInitialTickets() {
+  if (!(state.ticketsByQueue instanceof Map)) {
+    state.ticketsByQueue = new Map();
+  }
+  state.ticketsByQueue.clear();
 
   try {
     const queueIds = queueIdsToDisplay();
     if (queueIds.length === 0) return;
 
-    const queueNameMap = new Map((state.queues || []).map((q) => [q.id, q.name || q.id]));
-    const allWaiting = [];
-    const allCalled = [];
-    let onlineAtLeastOnce = false;
-
     for (const queueId of queueIds) {
       try {
         const tickets = await TicketService.getQueueTickets(queueId);
         writeCachedTickets(queueId, tickets);
-        onlineAtLeastOnce = true;
         touchRealtimeActivity();
-
-        const queueName = queueNameMap.get(queueId) || queueId;
-        tickets.forEach((t) => {
-          const enriched = { ...t, __queueId: queueId, __queueName: queueName };
-          if (t.status === "called") allCalled.push(enriched);
-          if (t.status === "waiting" || !t.status) allWaiting.push(enriched);
-        });
+        state.ticketsByQueue.set(String(queueId), new Map((Array.isArray(tickets) ? tickets : []).map((t) => [getTicketId(t), t]).filter(([id]) => !!id)));
       } catch (e) {
-        if (!isOfflineError(e)) {
-          console.error(e);
-        }
-
-        const queueName = queueNameMap.get(queueId) || queueId;
         const cached = readCachedTickets(queueId);
-        cached.forEach((t) => {
-          const enriched = { ...t, __queueId: queueId, __queueName: queueName };
-          if (t.status === "called") allCalled.push(enriched);
-          if (t.status === "waiting" || !t.status) allWaiting.push(enriched);
-        });
+        state.ticketsByQueue.set(String(queueId), new Map((Array.isArray(cached) ? cached : []).map((t) => [getTicketId(t), t]).filter(([id]) => !!id)));
       }
     }
 
-    allWaiting.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
-    allCalled.sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0));
-
-    renderWaiting(allWaiting);
-    detectAndChime(allCalled);
-    renderCalled(allCalled);
-    renderCalledBoard(allWaiting);
-    setConnectionStatus(!onlineAtLeastOnce);
+    renderTicketLists();
+    setConnectionStatus(false);
   } finally {
-    clearTimeout(refreshGuard);
-    state.refreshInFlight = false;
   }
 }
 
@@ -701,7 +857,13 @@ function setupRealtime() {
   if (queueIds.length === 0) return;
 
   state.realtimeUnsubs = queueIds.map((queueId) =>
-    RealtimeService.subscribeToQueue(queueId, () => { touchRealtimeActivity(); refreshQueue(); })
+    RealtimeService.subscribeToQueue(queueId, (payload) => {
+      touchRealtimeActivity();
+      const ticket = payload?.new || payload?.ticket || payload?.payload?.ticket || payload?.payload || null;
+      if (ticket && typeof ticket === "object") {
+        updateSingleTicket(ticket);
+      }
+    })
   );
 }
 
@@ -980,7 +1142,7 @@ function initEvents() {
     updateHeader();
     renderQr();
     setupRealtime();
-    await refreshQueue();
+    await seedInitialTickets();
     closeSettings();
   };
 }
@@ -1023,22 +1185,20 @@ async function bootstrap() {
 
   if (queueIdsToDisplay().length > 0) {
     setupRealtime();
-    await refreshQueue();
+    await seedInitialTickets();
   }
 
   window.addEventListener("online", () => {
     setConnectionStatus(false);
     touchRealtimeActivity();
     scheduleWsReconnect("browser_online");
-    refreshQueue();
+    seedInitialTickets();
   });
 
   window.addEventListener("offline", () => {
     setConnectionStatus(true);
   });
 
-  // Safety polling (lower rate) in case realtime events are missed.
-  setInterval(refreshQueue, 7000);
 }
 
 document.addEventListener("DOMContentLoaded", bootstrap);
